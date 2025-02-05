@@ -151,6 +151,10 @@
       <EnableUAC>false</EnableUAC>
       <AdditionalDependencies>gdiplus.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Message>Copy to ReleaseOut.</Message>
+      <Command>$(SolutionDir)CompileScript\copy_out_dir_to_release_out.bat</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="components\component.window.h" />
