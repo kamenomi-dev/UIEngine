@@ -30,3 +30,9 @@
 *.exe
 *.out
 *.app
+/.vs/UIEngine
+/DebugLibrary/x64
+/UIEngine/x64
+/x64
+*.zip
+/planning.json
