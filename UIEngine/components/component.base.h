@@ -5,18 +5,9 @@
 namespace Engine {
 namespace Component {
 
-namespace Defines {
-typedef struct __structPropertyPair {
-    wstring propertyKey;
-    void*   propertyValuePtr;
-} PropertyPair;
-} // namespace Defines
-
-using namespace Defines;
-
-class UIENGINE_API CBase {
+class UIENGINE_API CBase : public Utils::CProperty {
 public:
-    CBase(vector<PropertyPair>);
+    CBase(vector<Utils::PropertyPair>);
     ~CBase();
 
     friend class CWindow;
@@ -28,25 +19,21 @@ public:
     inline vector<CBase*>* GetChildCompnents();
     inline CBase*          GetParentComponent();
 
-    void                           SetProperty(wstring, void*);
-    void*                          GetProperty(wstring) const;
-    virtual wstring                GetComponentClass() const;
-    void                           SetComponentLabel(wstring);
-    wstring                        GetComponentLabel() const;
-    unordered_map<wstring, void*>* GetComponentData() const;
+    unordered_map<wstring, any>* GetComponentData() const;
+    virtual wstring              GetComponentClass() const;
+    void                         SetComponentLabel(wstring);
+    wstring                      GetComponentLabel() const;
 
     void  SetComponentSize(Size);
     void  SetComponentPosition(Point);
     Size  GetComponentSize() const;
     Point GetComponentPosition() const;
 
-    virtual LRESULT
-    __Native_ComponentMessageProcessor(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, bool& bIsReturn);
-    virtual void __Native_TransformMessageProcessor(UINT uMsg, WPARAM wParam, LPARAM lParam);
+    virtual void    Render(Gdiplus::Graphics&);
+    virtual LRESULT __Native_ComponentMessageProcessor(UINT uMsg, WPARAM wParam, LPARAM lParam, bool& bIsReturn);
+    virtual void    __Native_TransformMessageProcessor(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 private:
-    unordered_map<wstring, void*>* _componentData;
-
     CBase*               _pParentComponent;
     std::vector<CBase*>* _pChildComponents;
 

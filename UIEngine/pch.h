@@ -16,7 +16,9 @@
 #pragma comment(lib, "dwmapi.lib")
 #pragma comment(lib, "gdiplus.lib")
 
+#include <any>
 #include <assert.h>
+#include <exception>
 #include <functional>
 #include <string>
 #include <unordered_map>
@@ -27,6 +29,10 @@ using Gdiplus::Rect;
 using Gdiplus::Size;
 using Gdiplus::Status;
 
+using std::any;
+using std::any_cast;
+using std::bad_any_cast;
+using std::exception;
 using std::function;
 using std::string;
 using std::unordered_map;

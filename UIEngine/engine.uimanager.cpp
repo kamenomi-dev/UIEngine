@@ -79,7 +79,7 @@ CWindow* UIManager::CreateNormalWindow(wstring titleText, wstring className, Rec
 
     if (((_windowMap->at(newWindow->GetWindowHandle()) == nullptr) && _windowMap->size() == 1)
         || _windowMap->size() == 0) {
-        newWindow->SetProperty(L"isOwnerWindow", new bool(true));
+        newWindow->SetPropertyIfNotExistByValue(L"isOwnerWindow", new bool(true));
     }
 
     __InsertWindowMap(newWindow->GetWindowHandle(), newWindow);
@@ -90,7 +90,7 @@ void UIManager::__InsertWindowMap(HWND hWnd, Component::CWindow* pWindow) {
     CHECK_RESULT_BOOL(pWindow);
 
     const auto selfWindowHandle = pWindow->GetWindowHandle();
-    if (*(bool*)pWindow->GetProperty(L"isOwnerWindow")) {
+    if (CProperty_GetProperty_WithInstance(pWindow, L"isOwnerWindow", bool)) {
         (*_mainWindowMap)[selfWindowHandle] = pWindow;
     }
 
@@ -165,9 +165,14 @@ LRESULT UIManager::WindowsMessageProcessor(HWND hWnd, UINT uMsg, WPARAM wParam, 
     if (uMsg == WM_PAINT) {
         auto        swapBuffer = pWindow->GetWindowSwapBuffer();
         PAINTSTRUCT paintStruct{};
-        auto        hTargetDC = BeginPaint(hWnd, &paintStruct);
+
+        auto hTargetDC = BeginPaint(hWnd, &paintStruct);
 
         Gdiplus::Graphics graphics(swapBuffer->GetRenderableDC());
+
+        paintStruct.rcPaint;
+
+        /*
         pWindow->Render(graphics);
 
         Gdiplus::Font       font(L"Segoe UI", 16);
@@ -176,6 +181,7 @@ LRESULT UIManager::WindowsMessageProcessor(HWND hWnd, UINT uMsg, WPARAM wParam, 
 
         graphics.DrawString(hoveredCompLabel.c_str(), hoveredCompLabel.length(), &font, {0, 0}, &brush);
         graphics.FillRectangle(&mouseBrush, Rect({ptMouse.X - 4, ptMouse.Y - 8, 8, 16}));
+        */
 
         swapBuffer->Present(hTargetDC);
         EndPaint(hWnd, &paintStruct);
@@ -241,7 +247,8 @@ inline static CBase* __TryHitTestFromRect(
     vector<CBase*>* currCompChildren,
     vector<CBase*>* resultComponents
 ) {
-    auto currentRect = *(Rect*)currComp->GetProperty(L"componentRect");
+    auto currentRect = CProperty_GetProperty_WithInstance(currComp, L"componentRect", Rect);
+
     if (((Rect*)targetRect)->Contains(currentRect)) {
 
         __TryHitTestConditionNext(targetRect, __TryHitTestFromRect, currCompChildren, resultComponents);
@@ -257,7 +264,7 @@ inline static CBase* __TryHitTestFromPoint(
     vector<CBase*>* currCompChildren,
     vector<CBase*>* resultComponents
 ) {
-    auto currentRect = *(Rect*)currComp->GetProperty(L"componentRect");
+    auto currentRect = CProperty_GetProperty_WithInstance(currComp, L"componentRect", Rect);
 
     if (currentRect.Contains(*(Point*)targetPoint)) {
 

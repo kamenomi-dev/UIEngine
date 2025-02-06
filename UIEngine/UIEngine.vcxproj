@@ -159,11 +159,12 @@
   <ItemGroup>
     <ClInclude Include="components\component.window.h" />
     <ClInclude Include="components\component.base.h" />
-    <ClInclude Include="engine.define.h" />
+    <ClInclude Include="engine.enum.h" />
     <ClInclude Include="engine.h" />
     <ClInclude Include="engine.logic.h" />
     <ClInclude Include="engine.render.h" />
     <ClInclude Include="engine.uimanager.h" />
+    <ClInclude Include="engine.util.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
@@ -174,6 +175,7 @@
     <ClCompile Include="engine.logic.cpp" />
     <ClCompile Include="engine.render.cpp" />
     <ClCompile Include="engine.uimanager.cpp" />
+    <ClCompile Include="engine.util.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

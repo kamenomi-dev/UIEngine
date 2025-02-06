@@ -6,97 +6,60 @@ using namespace Engine::Component;
 
 // Component Initialization
 
-CBase::CBase(vector<PropertyPair> pairs)
-: _pParentComponent(nullptr),
-  _pChildComponents(new std::vector<CBase*>),
-  _componentData(new unordered_map<wstring, void*>) {
-
-    for (size_t idx = 0; idx < pairs.size(); idx++) {
-        const auto& pair = pairs[idx];
-        _componentData->emplace(pair.propertyKey, pair.propertyValuePtr);
-    }
-
-    _componentData->emplace(L"visible", new bool(false));
-    _componentData->emplace(L"disabled", new bool(false));
-    _componentData->emplace(L"componentRect", new Rect({0, 0, 800, 600}));
-    _componentData->emplace(L"componentLabel", new wstring(L"UIEngine.Base"));
+CBase::CBase(vector<Utils::PropertyPair> pairs)
+: CProperty(pairs),
+  _pParentComponent(nullptr),
+  _pChildComponents(new std::vector<CBase*>) {
+    SetPropertyIfNotExistByValue(L"visible", false);
+    SetPropertyIfNotExistByValue(L"disabled", false);
+    SetPropertyIfNotExistByValue(L"componentRect", Rect({0, 0, 800, 600}));
+    SetPropertyIfNotExistByValue(L"componentLabel", L"UIEngine.Base");
 }
 
-CBase::~CBase() {
-    if (_componentData != nullptr) {
-
-        for (auto& pair : *_componentData) {
-            delete pair.second;
-        }
-        _componentData->clear();
-
-        delete _componentData;
-        _componentData = nullptr;
-    }
-}
+CBase::~CBase() {}
 
 // Component Identity Settger/Getter
 
-void CBase::SetProperty(wstring propertyKey, void* newData) {
-    auto pLastData = GetProperty(propertyKey);
-
-    if (pLastData != nullptr) {
-        delete pLastData;
-        pLastData = NULL;
-    }
-
-    try {
-        (*_componentData)[propertyKey] = newData;
-    } catch (const std::exception&) {
-        assert(false && "Stop! You are using a invalied property key.");
-    }
-}
-
-void* CBase::GetProperty(wstring propertyKey) const {
-    try {
-        return _componentData->at(propertyKey);
-    } catch (const std::exception&) {
-        assert(false && "Stop! You are using a invalied property key.");
-        return nullptr;
-    }
-}
-
 wstring CBase::GetComponentClass() const { return L"Base"; }
 
-void CBase::SetComponentLabel(wstring newLabel) { SetProperty(L"componentLabel", new wstring(newLabel)); }
+void CBase::SetComponentLabel(wstring newLabel) { SetPropertyIfNotExistByValue(L"componentLabel", newLabel); }
 
-wstring CBase::GetComponentLabel() const { return *(wstring*)GetProperty(L"componentLabel"); }
+wstring CBase::GetComponentLabel() const { return CProperty_GetProperty(L"componentLabel", wstring); }
 
-unordered_map<wstring, void*>* CBase::GetComponentData() const { return _componentData; }
+unordered_map<wstring, any>* CBase::GetComponentData() const { return GetPropertyData(); }
 
 // Component Rectangle Setter/Getter
 
 void CBase::SetComponentSize(Size newSize) {
-    auto rect    = (Rect*)((*_componentData)[L"componentRect"]);
-    rect->Width  = newSize.Width;
-    rect->Height = newSize.Height;
+    auto rect = CProperty_GetProperty(L"componentRect", Rect);
+    rect.Width  = newSize.Width;
+    rect.Height = newSize.Height;
+
+    SetPropertyByValue(L"componentRect", rect);
 }
 
 void CBase::SetComponentPosition(Point newPosition) {
-    auto rect = (Rect*)((*_componentData)[L"componentRect"]);
-    rect->X   = newPosition.X;
-    rect->Y   = newPosition.Y;
+    auto rect = CProperty_GetProperty(L"componentRect", Rect);
+    rect.X    = newPosition.X;
+    rect.Y    = newPosition.Y;
+
+    SetPropertyByValue(L"componentRect", rect);
 }
 
 Size CBase::GetComponentSize() const {
-    auto rect = (Rect*)((*_componentData)[L"componentRect"]);
-    Size retSize{};
+    const auto rect = CProperty_GetProperty(L"componentRect", Rect);
+    Size       retSize{};
 
-    rect->GetSize(&retSize);
+    rect.GetSize(&retSize);
 
     return retSize;
 }
 
 Point CBase::GetComponentPosition() const {
-    auto  rect = (Rect*)((*_componentData)[L"componentRect"]);
-    Point retPosition{};
+    const auto rect = CProperty_GetProperty(L"componentRect", Rect);
+    Point      retPosition{};
 
-    rect->GetLocation(&retPosition);
+    rect.GetLocation(&retPosition);
 
     return retPosition;
 }
@@ -124,7 +87,9 @@ inline void CBase::__SetParentComponent(CBase* pComponent) { _pParentComponent =
 
 // Component Message
 
-LRESULT CBase::__Native_ComponentMessageProcessor(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, bool& bIsReturn) {
+void Engine::Component::CBase::Render(Gdiplus::Graphics&) {}
+
+LRESULT CBase::__Native_ComponentMessageProcessor(UINT uMsg, WPARAM wParam, LPARAM lParam, bool& bIsReturn) {
     bIsReturn = false;
     return NULL;
 }

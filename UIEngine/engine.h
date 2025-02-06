@@ -7,7 +7,8 @@
 #define UIENGINE_API __declspec(dllimport)
 #endif
 
-#include "./engine.define.h"
+#include "./engine.util.h"
+#include "./engine.enum.h"
 #include "./engine.render.h"
 #include "./engine.logic.h"
 #include "./components/component.base.h"

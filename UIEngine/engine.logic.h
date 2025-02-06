@@ -6,7 +6,7 @@
 namespace Engine {
 namespace Logic {
 
-class UIENGINE_API CWindowLogic : Interface::IUninheritable{
+class UIENGINE_API CWindowLogic final {
   void TranslateMessageToComponent(UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
     }

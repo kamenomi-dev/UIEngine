@@ -8,7 +8,7 @@ namespace Component {
 
 class UIENGINE_API CWindow : public CBase {
 public:
-    CWindow(vector<PropertyPair>);
+    CWindow(vector<Utils::PropertyPair>);
     ~CWindow();
 
 public:
@@ -26,8 +26,7 @@ public:
     // Bad using.
     Render::CSwapBuffer* GetWindowSwapBuffer();
 
-    virtual void Render(Gdiplus::Graphics&);
-
+    void Render(Gdiplus::Graphics&);
     LRESULT __Native_ComponentMessageProcessor(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, bool& bIsReturn);
 
 private:

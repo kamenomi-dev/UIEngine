@@ -8,7 +8,7 @@ namespace Render {
 
 // SwapBuffer .
 
-class UIENGINE_API CSwapBuffer : Interface::IUninheritable {
+class UIENGINE_API CSwapBuffer final {
 private:
     HWND    _hTargetWnd;
     SIZE    _hTargetSize;

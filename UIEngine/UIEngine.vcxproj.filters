@@ -24,9 +24,6 @@
     <ClInclude Include="engine.render.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="engine.define.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="engine.logic.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -37,6 +34,12 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="components\component.window.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="engine.enum.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="engine.util.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
@@ -63,6 +66,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="components\component.window.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="engine.util.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

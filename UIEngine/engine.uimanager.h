@@ -18,21 +18,11 @@ using namespace Defines;
 
 class CComponentTree;
 
-class UIENGINE_API UIManager : public Interface::ISealable<UIManager> {
-
-    // - init once.
-
-private:
-    static UIManager* __hInstance;
-
+class UIENGINE_API UIManager final {
 public:
     static UIManager* Initialize(HINSTANCE hInstance);
     static UIManager* Get();
 
-    // -
-
-public:
-    UIManager(HINSTANCE hInstance);
     ~UIManager();
 
     HINSTANCE GetProcessInstance() const;
@@ -54,15 +44,19 @@ public:
     WPARAM         StartMessageLoop();
 
 private:
+    static UIManager*                         __hInstance;
+
     HINSTANCE                                 _hProcessInstance;
     unordered_map<HWND, Component::CWindow*>* _windowMap;
     unordered_map<HWND, Component::CWindow*>* _mainWindowMap;
     unordered_map<HWND, CComponentTree*>*     _windowTreeMap;
 
+    UIManager(HINSTANCE hInstance);
+
     void __InsertWindowMap(HWND, Component::CWindow*);
 };
 
-class UIENGINE_API CComponentTree : public Interface::ISealable<CComponentTree> {
+class UIENGINE_API CComponentTree final{
 public:
     CComponentTree(Component::CWindow* pRootWindow);
 
