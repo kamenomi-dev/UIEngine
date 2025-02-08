@@ -2,8 +2,9 @@
 
 #ifndef __ENGINE_UTIL_H__
 
+// FIXME : Remove this
 #define CProperty_GetProperty(key, type) any_cast<type>(GetProperty(key))
-
+// FIXME : Remove this
 #define CProperty_GetProperty_WithInstance(ptr, key, type) any_cast<type>(ptr->GetProperty(key))
 
 namespace Engine {
@@ -23,22 +24,47 @@ using namespace Defines;
 
 class UIENGINE_API CProperty {
 public:
-    CProperty(vector<PropertyPair>);
-    ~CProperty();
+    CProperty(const vector<PropertyPair>&);
 
-    inline void SetPropertyByValue(wstring, any);
-    inline void SetPropertyByRef(wstring, any&);
+    inline void SetPropertyByValue(const wstring&, any);
+    inline void SetPropertyByRef(const wstring&, any&);
 
-    inline void SetPropertyIfNotExistByValue(wstring, any);
-    inline void SetPropertyIfNotExistByRef(wstring, any&);
+    inline void SetPropertyIfNotExistByValue(const wstring&, any);
+    inline void SetPropertyIfNotExistByRef(const wstring&, any&);
 
-    inline any&       GetProperty(wstring);
-    inline const any& GetProperty(wstring) const;
+    inline any& GetProperty(const wstring& key) {
+        const auto it = _propertyData.find(key);
+        if (it == _propertyData.end())
+        {
+            DebugBreak();
+            abort();
+        }
+        return it->second;
+    }
+    inline const any& GetProperty(const wstring& key) const {
+        const auto it = _propertyData.find(key);
+        if (it == _propertyData.end())
+        {
+            DebugBreak();
+            abort();
+        }
+        return it->second;
+    }
 
-    unordered_map<wstring, any>* GetPropertyData() const;
+    auto& GetPropertyData() { return _propertyData; }
+    auto& GetPropertyData() const { return _propertyData; }
+
+    template <class T>
+    auto& GetPropertyTyped(const wstring& key) {
+        return any_cast<T&>(GetProperty(key));
+    }
+    template <class T>
+    auto& GetPropertyTyped(const wstring& key) const {
+        return any_cast<const T&>(GetProperty(key));
+    }
 
 private:
-    unordered_map<wstring, any>* _propertyData;
+    unordered_map<wstring, any> _propertyData;
 };
 
 } // namespace Utils

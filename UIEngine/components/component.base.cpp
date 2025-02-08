@@ -26,7 +26,7 @@ void CBase::SetComponentLabel(wstring newLabel) { SetPropertyIfNotExistByValue(L
 
 wstring CBase::GetComponentLabel() const { return CProperty_GetProperty(L"componentLabel", wstring); }
 
-unordered_map<wstring, any>* CBase::GetComponentData() const { return GetPropertyData(); }
+unordered_map<wstring, any>& CBase::GetComponentData() { return GetPropertyData(); }
 
 // Component Rectangle Setter/Getter
 

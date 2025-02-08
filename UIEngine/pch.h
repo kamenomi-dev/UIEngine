@@ -39,4 +39,6 @@ using std::unordered_map;
 using std::vector;
 using std::wstring;
 
+using namespace std::literals;
+
 #endif // PCH_H

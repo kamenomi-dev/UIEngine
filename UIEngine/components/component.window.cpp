@@ -7,15 +7,15 @@ using namespace Engine::Component;
 // Component Initialization
 
 CWindow::CWindow(vector<Utils::PropertyPair> pairs) : CBase(pairs) {
-    SetPropertyIfNotExistByValue(L"titleText", L"Window.");
-    SetPropertyIfNotExistByValue(L"classText", L"UIEngine.Window");
-    SetPropertyIfNotExistByValue(L"windowRect", Rect(0, 0, 800, 600));
-    SetPropertyIfNotExistByValue(L"parentWindow", nullptr);
-    SetPropertyIfNotExistByValue(L"isOwnerWindow", false);
+    SetPropertyByValue(L"titleText", L"Window."s);
+    SetPropertyByValue(L"classText", L"UIEngine.Window"s);
+    SetPropertyByValue(L"windowRect", Rect(0, 0, 800, 600));
+    SetPropertyByValue(L"parentWindow", nullptr);
+    SetPropertyByValue(L"isOwnerWindow", false);
 
-    SetPropertyByValue(L"componentRect", CProperty_GetProperty(L"windowRect", Rect));
+    SetPropertyByValue(L"componentRect", GetPropertyTyped<Rect>(L"windowRect"));
 
-    auto a = CProperty_GetProperty(L"classText", wstring).c_str();
+    auto a = GetPropertyTyped<wstring>(L"classText");
 
     __RegisterClass();
 

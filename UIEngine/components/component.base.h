@@ -19,7 +19,7 @@ public:
     inline vector<CBase*>* GetChildCompnents();
     inline CBase*          GetParentComponent();
 
-    unordered_map<wstring, any>* GetComponentData() const;
+    unordered_map<wstring, any>& GetComponentData();
     virtual wstring              GetComponentClass() const;
     void                         SetComponentLabel(wstring);
     wstring                      GetComponentLabel() const;

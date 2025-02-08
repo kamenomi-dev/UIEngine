@@ -47,7 +47,7 @@ private:
     static UIManager*                         __hInstance;
 
     HINSTANCE                                 _hProcessInstance;
-    unordered_map<HWND, Component::CWindow*>* _windowMap;
+    unordered_map<HWND, Component::CWindow*>* _windowMap;// TODO: ¸ÄÎªÆÕÍ¨×Ö¶Î
     unordered_map<HWND, Component::CWindow*>* _mainWindowMap;
     unordered_map<HWND, CComponentTree*>*     _windowTreeMap;
 

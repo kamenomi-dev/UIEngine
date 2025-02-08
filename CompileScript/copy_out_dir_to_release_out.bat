@@ -1,10 +1,10 @@
 REM binary out.
-xcopy ..\x64\Release\UIEngine.dll ..\ReleaseOut\bin\UIEngine.dll /S /I /Y
-xcopy ..\x64\Release\UIEngine.pdb ..\ReleaseOut\bin\UIEngine.pdb /S /I /Y
+echo f | xcopy ..\x64\Release\UIEngine.dll ..\ReleaseOut\bin\UIEngine.dll /Y /F
+echo f | xcopy ..\x64\Release\UIEngine.pdb ..\ReleaseOut\bin\UIEngine.pdb /Y /F
 
 REM lib
-xcopy ..\x64\Release\UIEngine.lib ..\ReleaseOut\lib\UIEngine.lib /S /I /Y
+echo f | xcopy ..\x64\Release\UIEngine.lib ..\ReleaseOut\lib\UIEngine.lib /Y /F
 
 REM header
-copy ..\UIEngine\*.h  ..\ReleaseOut\includes\ /Y
-copy ..\UIEngine\components\*.h  ..\ReleaseOut\includes\components\ /Y
+echo d | xcopy ..\UIEngine\*.h  ..\ReleaseOut\includes\ /Y /F
+echo d | xcopy ..\UIEngine\components\*.h  ..\ReleaseOut\includes\components\ /Y /F
