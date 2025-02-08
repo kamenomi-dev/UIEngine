@@ -36,3 +36,14 @@
 /x64
 *.zip
 /planning.json
+/ReleaseOut/bin
+/ReleaseOut/includes
+/ReleaseOut/lib
+/ReleaseOut/includes/components/component.base.h
+/ReleaseOut/includes/components/component.window.h
+/ReleaseOut/includes/engine.define.h
+/ReleaseOut/includes/engine.h
+/ReleaseOut/includes/engine.logic.h
+/ReleaseOut/includes/engine.render.h
+/ReleaseOut/includes/engine.uimanager.h
+/ReleaseOut/includes/pch.h
