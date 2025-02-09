@@ -36,3 +36,6 @@
 /x64
 *.zip
 /planning.json
+/ReleaseOut/bin
+/ReleaseOut/lib
+/ReleaseOut/includes
