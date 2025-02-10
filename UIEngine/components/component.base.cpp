@@ -22,7 +22,7 @@ CBase::~CBase() {}
 
 wstring CBase::GetComponentClass() const { return L"Base"; }
 
-void CBase::SetComponentLabel(wstring newLabel) { SetPropertyIfNotExistByValue(L"componentLabel", newLabel); }
+void CBase::SetComponentLabel(wstring newLabel) { SetPropertyByValue(L"componentLabel", newLabel); }
 
 wstring CBase::GetComponentLabel() const { return GetPropertyTyped<wstring>(L"componentLabel"); }
 
@@ -43,7 +43,9 @@ void CBase::SetComponentPosition(Point newPosition) {
     componentRect.Y = newPosition.Y;
 }
 
-Size CBase::GetComponentSize() const {
+inline Rect CBase::GetComponentRect() const { return GetPropertyTyped<Rect>(L"componentRect"); }
+
+inline Size CBase::GetComponentSize() const {
     const auto& componentRect = GetPropertyTyped<Rect>(L"componentRect");
     Size        returnSize{};
 
@@ -52,7 +54,7 @@ Size CBase::GetComponentSize() const {
     return returnSize;
 }
 
-Point CBase::GetComponentPosition() const {
+inline Point CBase::GetComponentPosition() const {
     const auto& componentRect = GetPropertyTyped<Rect>(L"componentRect");
     Point       returnPosition{};
 
@@ -84,11 +86,30 @@ inline void CBase::__SetParentComponent(CBase* pComponent) { _pParentComponent =
 
 // Component Message
 
-void Engine::Component::CBase::Render(Gdiplus::Graphics&) {}
+void CBase::Render(Gdiplus::Graphics& graphics) {
+    static unordered_map<void*, Gdiplus::Color> map{};
+
+    if (map.find(this) == map.end()) {
+        map[this] = Gdiplus::Color(rand() % 255, rand() % 255, rand() % 255);
+    }
+
+    graphics.Clear(map[this]);
+}
 
 LRESULT CBase::__Native_ComponentMessageProcessor(UINT uMsg, WPARAM wParam, LPARAM lParam, bool& bIsReturn) {
     bIsReturn = false;
     return NULL;
 }
 
-void CBase::__Native_TransformMessageProcessor(UINT uMsg, WPARAM wParam, LPARAM lParam) {}
+void CBase::__Native_TransformMessageProcessor(UINT uMsg, WPARAM wParam, LPARAM lParam) {
+    if (uMsg == ComponentBaseMessageEnum::CM_BASE_PAINT) {
+        auto& graphics = *((unique_ptr<Gdiplus::Graphics>*)lParam)->get();
+
+        const auto lastState = graphics.Save();
+        {
+            graphics.SetClip(GetComponentRect());
+            Render(graphics);
+        }
+        graphics.Restore(lastState);
+    }
+}

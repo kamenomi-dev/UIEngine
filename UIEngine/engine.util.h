@@ -1,11 +1,7 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later */
 #pragma once
 
 #ifndef __ENGINE_UTIL_H__
-
-// FIXME : Remove this
-#define CProperty_GetProperty(key, type) any_cast<type>(GetProperty(key))
-// FIXME : Remove this
-#define CProperty_GetProperty_WithInstance(ptr, key, type) any_cast<type>(ptr->GetProperty(key))
 
 namespace Engine {
 

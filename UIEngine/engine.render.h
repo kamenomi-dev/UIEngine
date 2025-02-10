@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later */
 #pragma once
 
 #ifndef __ENGINE_RENDER_H__
@@ -8,7 +9,7 @@ namespace Render {
 
 // SwapBuffer .
 
-class UIENGINE_API CSwapBuffer final {
+class UIENGINE_API SwapBuffer final {
 private:
     HWND    _hTargetWnd;
     SIZE    _hTargetSize;
@@ -20,8 +21,8 @@ private:
     void __DestroyOldBitmap();
 
 public:
-    CSwapBuffer(HWND hWindow);
-    ~CSwapBuffer();
+    SwapBuffer(HWND hWindow);
+    ~SwapBuffer();
 
     HDC GetRenderableDC() const;
 
