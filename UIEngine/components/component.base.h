@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later */
 #pragma once
 #ifndef __COMPONENT_BASE_H__
 #define __COMPONENT_BASE_H__
@@ -20,22 +21,24 @@ public:
     inline CBase*          GetParentComponent();
 
     unordered_map<wstring, any>& GetComponentData();
-    virtual wstring              GetComponentClass() const;
-    void                         SetComponentLabel(wstring);
-    wstring                      GetComponentLabel() const;
 
-    void  SetComponentSize(Size);
-    void  SetComponentPosition(Point);
-    Size  GetComponentSize() const;
-    Point GetComponentPosition() const;
+    inline virtual wstring GetComponentClass() const;
+    void                   SetComponentLabel(wstring);
+    wstring                GetComponentLabel() const;
+
+    void         SetComponentSize(Size);
+    void         SetComponentPosition(Point);
+    inline Rect  GetComponentRect() const;
+    inline Size  GetComponentSize() const;
+    inline Point GetComponentPosition() const;
 
     virtual void    Render(Gdiplus::Graphics&);
     virtual LRESULT __Native_ComponentMessageProcessor(UINT uMsg, WPARAM wParam, LPARAM lParam, bool& bIsReturn);
     virtual void    __Native_TransformMessageProcessor(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 private:
-    CBase*               _pParentComponent;
-    std::vector<CBase*>* _pChildComponents;
+    CBase*          _pParentComponent;
+    vector<CBase*>* _pChildComponents;
 
     inline void __SetParentComponent(CBase*);
 };

@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later */
 #pragma once
 
 #ifndef __COMPONENT_WINDOW_H__
@@ -12,31 +13,38 @@ public:
     ~CWindow();
 
 public:
+    unique_ptr<Logic::CComponentTree>& GetComponentTree();
+
     wstring GetComponentClass() const;
     Point   SetComponentPosition() const = delete; // don't do that.
 
-    bool  IsOwnerWindow() const;
-    HWND  GetWindowHandle() const;
-    void  SetWindowOwner(CWindow*);
-    void  SetWindowSize(Size, bool isNative = false);
-    void  SetWindowPosition(Point, bool isNative = false);
-    Size  GetWindowSize() const;
-    Point GetWindowPosition() const;
+    bool         IsOwnerWindow() const;
+    HWND         GetWindowHandle() const;
+    void         SetWindowOwner(CWindow*);
+    inline void  SetWindowSize(Size);
+    inline void  SetWindowPosition(Point);
+    inline Size  GetWindowSize() const;
+    inline Point GetWindowPosition() const;
 
-    // Bad using.
-    Render::CSwapBuffer* GetWindowSwapBuffer();
+    unique_ptr<Render::SwapBuffer>& GetWindowSwapBuffer();
 
-    void Render(Gdiplus::Graphics&);
-    LRESULT __Native_ComponentMessageProcessor(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, bool& bIsReturn);
+    void        Render(Gdiplus::Graphics&);
+    inline void __Native_SetWindowSize(Size);
+    inline void __Native_SetWindowPosition(Point);
+    inline LRESULT
+    __Native_ComponentMessageProcessor(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, bool& bIsReturn);
 
 private:
-    HWND                 _hSelfWindow;
-    WNDCLASSEXW          _wndClassInfo;
-    Render::CSwapBuffer* _renderSwapBuffer;
+    HWND                              _hSelfWindow;
+    WNDCLASSEXW                       _wndClassInfo;
+    unique_ptr<Logic::CComponentTree> _componentTree;
+    unique_ptr<Render::SwapBuffer>    _renderSwapBuffer;
 
     void __RegisterClass();
     void __UnregisterClass();
-    void __UpdateRectangle(bool isNative = false);
+    HWND __CreateWindow();
+    void __DeleteWindow();
+    void __UpdateRectangle();
 };
 } // namespace Component
 } // namespace Engine

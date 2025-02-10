@@ -12,8 +12,8 @@ CBase::CBase(vector<Utils::PropertyPair> pairs)
   _pChildComponents(new std::vector<CBase*>) {
     SetPropertyIfNotExistByValue(L"visible", false);
     SetPropertyIfNotExistByValue(L"disabled", false);
-    SetPropertyIfNotExistByValue(L"componentRect", Rect({0, 0, 800, 600}));
-    SetPropertyIfNotExistByValue(L"componentLabel", L"UIEngine.Base");
+    SetPropertyIfNotExistByValue(L"componentRect", make_any<Rect>(0, 0, 800, 600));
+    SetPropertyIfNotExistByValue(L"componentLabel", L"UIEngine.Base "s + std::to_wstring(rand() % time(0)));
 }
 
 CBase::~CBase() {}
@@ -22,46 +22,45 @@ CBase::~CBase() {}
 
 wstring CBase::GetComponentClass() const { return L"Base"; }
 
-void CBase::SetComponentLabel(wstring newLabel) { SetPropertyIfNotExistByValue(L"componentLabel", newLabel); }
+void CBase::SetComponentLabel(wstring newLabel) { SetPropertyByValue(L"componentLabel", newLabel); }
 
-wstring CBase::GetComponentLabel() const { return CProperty_GetProperty(L"componentLabel", wstring); }
+wstring CBase::GetComponentLabel() const { return GetPropertyTyped<wstring>(L"componentLabel"); }
 
 unordered_map<wstring, any>& CBase::GetComponentData() { return GetPropertyData(); }
 
 // Component Rectangle Setter/Getter
 
 void CBase::SetComponentSize(Size newSize) {
-    auto rect = CProperty_GetProperty(L"componentRect", Rect);
-    rect.Width  = newSize.Width;
-    rect.Height = newSize.Height;
-
-    SetPropertyByValue(L"componentRect", rect);
+    auto& componentRect  = GetPropertyTyped<Rect>(L"componentRect");
+    componentRect.Width  = newSize.Width;
+    componentRect.Height = newSize.Height;
 }
 
 void CBase::SetComponentPosition(Point newPosition) {
-    auto rect = CProperty_GetProperty(L"componentRect", Rect);
-    rect.X    = newPosition.X;
-    rect.Y    = newPosition.Y;
+    auto& componentRect = GetPropertyTyped<Rect>(L"componentRect");
 
-    SetPropertyByValue(L"componentRect", rect);
+    componentRect.X = newPosition.X;
+    componentRect.Y = newPosition.Y;
 }
 
-Size CBase::GetComponentSize() const {
-    const auto rect = CProperty_GetProperty(L"componentRect", Rect);
-    Size       retSize{};
+inline Rect CBase::GetComponentRect() const { return GetPropertyTyped<Rect>(L"componentRect"); }
 
-    rect.GetSize(&retSize);
+inline Size CBase::GetComponentSize() const {
+    const auto& componentRect = GetPropertyTyped<Rect>(L"componentRect");
+    Size        returnSize{};
 
-    return retSize;
+    componentRect.GetSize(&returnSize);
+
+    return returnSize;
 }
 
-Point CBase::GetComponentPosition() const {
-    const auto rect = CProperty_GetProperty(L"componentRect", Rect);
-    Point      retPosition{};
+inline Point CBase::GetComponentPosition() const {
+    const auto& componentRect = GetPropertyTyped<Rect>(L"componentRect");
+    Point       returnPosition{};
 
-    rect.GetLocation(&retPosition);
+    componentRect.GetLocation(&returnPosition);
 
-    return retPosition;
+    return returnPosition;
 }
 
 // Component Family
@@ -87,11 +86,30 @@ inline void CBase::__SetParentComponent(CBase* pComponent) { _pParentComponent =
 
 // Component Message
 
-void Engine::Component::CBase::Render(Gdiplus::Graphics&) {}
+void CBase::Render(Gdiplus::Graphics& graphics) {
+    static unordered_map<void*, Gdiplus::Color> map{};
+
+    if (map.find(this) == map.end()) {
+        map[this] = Gdiplus::Color(rand() % 255, rand() % 255, rand() % 255);
+    }
+
+    graphics.Clear(map[this]);
+}
 
 LRESULT CBase::__Native_ComponentMessageProcessor(UINT uMsg, WPARAM wParam, LPARAM lParam, bool& bIsReturn) {
     bIsReturn = false;
     return NULL;
 }
 
-void CBase::__Native_TransformMessageProcessor(UINT uMsg, WPARAM wParam, LPARAM lParam) {}
+void CBase::__Native_TransformMessageProcessor(UINT uMsg, WPARAM wParam, LPARAM lParam) {
+    if (uMsg == ComponentBaseMessageEnum::CM_BASE_PAINT) {
+        auto& graphics = *((unique_ptr<Gdiplus::Graphics>*)lParam)->get();
+
+        const auto lastState = graphics.Save();
+        {
+            graphics.SetClip(GetComponentRect());
+            Render(graphics);
+        }
+        graphics.Restore(lastState);
+    }
+}

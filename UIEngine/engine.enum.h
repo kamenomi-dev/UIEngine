@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later */
 #pragma once
 
 #ifndef __ENGINE_ENUM_H__

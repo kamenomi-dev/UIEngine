@@ -1,11 +1,7 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later */
 #pragma once
 
 #ifndef __ENGINE_UTIL_H__
-
-// FIXME : Remove this
-#define CProperty_GetProperty(key, type) any_cast<type>(GetProperty(key))
-// FIXME : Remove this
-#define CProperty_GetProperty_WithInstance(ptr, key, type) any_cast<type>(ptr->GetProperty(key))
 
 namespace Engine {
 
@@ -25,6 +21,7 @@ using namespace Defines;
 class UIENGINE_API CProperty {
 public:
     CProperty(const vector<PropertyPair>&);
+    ~CProperty();
 
     inline void SetPropertyByValue(const wstring&, any);
     inline void SetPropertyByRef(const wstring&, any&);
@@ -33,8 +30,8 @@ public:
     inline void SetPropertyIfNotExistByRef(const wstring&, any&);
 
     inline any& GetProperty(const wstring& key) {
-        const auto it = _propertyData.find(key);
-        if (it == _propertyData.end())
+        const auto it = _propertyData->find(key);
+        if (it == _propertyData->end())
         {
             DebugBreak();
             abort();
@@ -42,8 +39,8 @@ public:
         return it->second;
     }
     inline const any& GetProperty(const wstring& key) const {
-        const auto it = _propertyData.find(key);
-        if (it == _propertyData.end())
+        const auto it = _propertyData->find(key);
+        if (it == _propertyData->end())
         {
             DebugBreak();
             abort();
@@ -51,8 +48,8 @@ public:
         return it->second;
     }
 
-    auto& GetPropertyData() { return _propertyData; }
-    auto& GetPropertyData() const { return _propertyData; }
+    auto& GetPropertyData() { return *_propertyData; }
+    auto& GetPropertyData() const { return *_propertyData; }
 
     template <class T>
     auto& GetPropertyTyped(const wstring& key) {
@@ -64,7 +61,7 @@ public:
     }
 
 private:
-    unordered_map<wstring, any> _propertyData;
+    unordered_map<wstring, any>* _propertyData;
 };
 
 } // namespace Utils

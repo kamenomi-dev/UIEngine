@@ -1,8 +1,29 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later */
+/*
+*    Gdiplus UI, using gdiplus, is a UI library of Windows platform which
+*    is based on C++.
+*     Copyright (C) 2025  Project Contributors
+*
+*    This program is free software: you can redistribute it and/or modify
+*    it under the terms of the GNU General Public License as published by
+*    the Free Software Foundation, either version 3 of the License, or
+*     any later version.
+*
+*    This program is distributed in the hope that it will be useful,
+*    but WITHOUT ANY WARRANTY; without even the implied warranty of
+*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*    GNU General Public License for more details.
+*
+*    You should have received a copy of the GNU General Public License
+*    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
 #include "pch.h"
 
 #include "engine.h"
 
 using namespace Engine;
+
+using namespace Logic;
 using namespace Component;
 
 // UIManager Initialization
@@ -24,7 +45,6 @@ UIManager* UIManager::Get() {
 UIManager::UIManager(HINSTANCE hInstance) : _hProcessInstance(hInstance), _windowMap(nullptr), _mainWindowMap(nullptr) {
     this->_windowMap     = new unordered_map<HWND, Component::CWindow*>;
     this->_mainWindowMap = new unordered_map<HWND, Component::CWindow*>;
-    this->_windowTreeMap = new unordered_map<HWND, CComponentTree*>;
 
     Engine::Initialize(hInstance);
 }
@@ -69,10 +89,10 @@ CWindow* UIManager::CreateCentralWindow(wstring titleText, wstring className, Si
 
 CWindow* UIManager::CreateNormalWindow(wstring titleText, wstring className, Rect windowRect, CWindow* parentWindow) {
     auto newWindow = new CWindow({
-        {L"titleText",    new wstring(titleText)},
-        {L"classText",    new wstring(className)},
-        {L"windowRect",   new Rect(windowRect)  },
-        {L"parentWindow", parentWindow          }
+        {L"titleText",    (titleText)     },
+        {L"classText",    (className)     },
+        {L"windowRect",   Rect(windowRect)},
+        {L"parentWindow", parentWindow    }
     });
 
     // Default is main for first main.
@@ -90,12 +110,12 @@ void UIManager::__InsertWindowMap(HWND hWnd, Component::CWindow* pWindow) {
     CHECK_RESULT_BOOL(pWindow);
 
     const auto selfWindowHandle = pWindow->GetWindowHandle();
-    if (CProperty_GetProperty_WithInstance(pWindow, L"isOwnerWindow", bool)) {
+    auto       z                = pWindow->GetPropertyTyped<bool>(L"isOwnerWindow");
+    if (pWindow->GetPropertyTyped<bool>(L"isOwnerWindow")) {
         (*_mainWindowMap)[selfWindowHandle] = pWindow;
     }
 
     (*_windowMap)[selfWindowHandle]     = pWindow;
-    (*_windowTreeMap)[selfWindowHandle] = new CComponentTree(pWindow);
 }
 
 // UIManager Message Processor
@@ -112,7 +132,7 @@ LRESULT UIManager::WindowsMessageProcessor(HWND hWnd, UINT uMsg, WPARAM wParam, 
     if (uMsg == WM_MOUSEMOVE) {
         ptMouse = {GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)};
 
-        auto result = (*pUIManager._windowTreeMap)[hWnd]->TryHitTest(ptMouse);
+        auto result = pWindow->GetComponentTree()->TryHitTest(ptMouse);
 
         const auto finalWindow = result.at(0);
         if (finalWindow != nullptr) {
@@ -141,50 +161,33 @@ LRESULT UIManager::WindowsMessageProcessor(HWND hWnd, UINT uMsg, WPARAM wParam, 
         }
 
         if (pMainWindowMap.size() == 0) {
+            for (auto& window : *(pUIManager._windowMap)) {
+                if (window.second != nullptr) {
+                    delete window.second;
+                }
+            }
+
             PostQuitMessage(NULL);
         }
 
         return NULL;
     }
 
-    if (uMsg == WM_WINDOWPOSCHANGED) {
-        WINDOWPOS windowPos = *(WINDOWPOS*)(void*)lParam;
+    if (uMsg == WM_SIZE) {
+        pWindow->__Native_SetWindowSize({GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)});
 
-        if ((windowPos.flags & SWP_NOSIZE) == NULL) {
-            pWindow->SetWindowSize({windowPos.cx, windowPos.cy}, true);
-        }
+        return NULL;
+    }
 
-        if ((windowPos.flags & SWP_NOMOVE) == NULL) {
-            pWindow->SetWindowPosition({windowPos.x, windowPos.y}, true);
-        }
+    if (uMsg == WM_MOVE) {
+        pWindow->__Native_SetWindowPosition({GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)});
 
-        return NULL; // Skip.
+        return NULL;
     }
 
     // Todo, how?
     if (uMsg == WM_PAINT) {
-        auto        swapBuffer = pWindow->GetWindowSwapBuffer();
-        PAINTSTRUCT paintStruct{};
-
-        auto hTargetDC = BeginPaint(hWnd, &paintStruct);
-
-        Gdiplus::Graphics graphics(swapBuffer->GetRenderableDC());
-
-        paintStruct.rcPaint;
-
-        /*
-        pWindow->Render(graphics);
-
-        Gdiplus::Font       font(L"Segoe UI", 16);
-        Gdiplus::SolidBrush brush(Gdiplus::Color::NavajoWhite);
-        Gdiplus::SolidBrush mouseBrush(Gdiplus::Color::DarkGray);
-
-        graphics.DrawString(hoveredCompLabel.c_str(), hoveredCompLabel.length(), &font, {0, 0}, &brush);
-        graphics.FillRectangle(&mouseBrush, Rect({ptMouse.X - 4, ptMouse.Y - 8, 8, 16}));
-        */
-
-        swapBuffer->Present(hTargetDC);
-        EndPaint(hWnd, &paintStruct);
+        pWindow->__Native_ComponentMessageProcessor(hWnd, uMsg, wParam, lParam, bNoop);
         return NULL;
     }
 
@@ -211,82 +214,4 @@ WPARAM UIManager::StartMessageLoop() {
     Uninitialize();
 
     return msgStruct.wParam;
-}
-
-// Component Tree
-
-CComponentTree::CComponentTree(CWindow* pRootWindow) : _pRootWindow(pRootWindow) {}
-
-CWindow* CComponentTree::GetRootWindow() const { return _pRootWindow; }
-
-// Compenont Tree - -  Hittest Implement
-
-inline static void __TryHitTestConditionNext(
-    LPVOID                 lParam,
-    TTryHittestCondition&& conditionFunc,
-    vector<CBase*>*        components,
-    vector<CBase*>*        resultComponents
-) {
-    for (size_t idx = 0; idx < components->size(); idx++) {
-        auto currComp = (*components)[idx];
-        if (currComp == nullptr) {
-            continue;
-        }
-
-        auto resultComp = conditionFunc(lParam, currComp, currComp->GetChildCompnents(), resultComponents);
-
-        if (resultComp != nullptr) {
-            resultComponents->push_back(resultComp);
-        }
-    }
-};
-
-inline static CBase* __TryHitTestFromRect(
-    LPVOID          targetRect,
-    CBase*          currComp,
-    vector<CBase*>* currCompChildren,
-    vector<CBase*>* resultComponents
-) {
-    auto currentRect = CProperty_GetProperty_WithInstance(currComp, L"componentRect", Rect);
-
-    if (((Rect*)targetRect)->Contains(currentRect)) {
-
-        __TryHitTestConditionNext(targetRect, __TryHitTestFromRect, currCompChildren, resultComponents);
-        return currComp;
-    }
-
-    return nullptr;
-}
-
-inline static CBase* __TryHitTestFromPoint(
-    LPVOID          targetPoint,
-    CBase*          currComp,
-    vector<CBase*>* currCompChildren,
-    vector<CBase*>* resultComponents
-) {
-    auto currentRect = CProperty_GetProperty_WithInstance(currComp, L"componentRect", Rect);
-
-    if (currentRect.Contains(*(Point*)targetPoint)) {
-
-        __TryHitTestConditionNext(targetPoint, __TryHitTestFromPoint, currCompChildren, resultComponents);
-        return currComp;
-    }
-
-    return nullptr;
-}
-
-vector<CBase*> CComponentTree::TryHitTest(Rect targetRect) {
-    return TryHitTestWithCondition(__TryHitTestFromRect, &targetRect);
-}
-
-vector<CBase*> CComponentTree::TryHitTest(Point targetPoint) {
-    return TryHitTestWithCondition(__TryHitTestFromPoint, &targetPoint);
-}
-
-vector<CBase*> CComponentTree::TryHitTestWithCondition(TTryHittestCondition conditionFunc, LPVOID lParam) {
-    vector<CBase*> resultComps{};
-
-    resultComps.push_back(conditionFunc(lParam, _pRootWindow, _pRootWindow->GetChildCompnents(), &resultComps));
-
-    return resultComps;
 }

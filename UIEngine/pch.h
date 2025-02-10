@@ -1,4 +1,5 @@
-﻿#ifndef PCH_H
+﻿/* SPDX-License-Identifier: GPL-3.0-or-later */
+#ifndef PCH_H
 #define PCH_H
 
 // Must support.
@@ -16,28 +17,40 @@
 #pragma comment(lib, "dwmapi.lib")
 #pragma comment(lib, "gdiplus.lib")
 
+#include <algorithm>
 #include <any>
 #include <assert.h>
 #include <exception>
 #include <functional>
+#include <iostream>
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
+
+using std::reverse;
 
 using Gdiplus::Point;
 using Gdiplus::Rect;
 using Gdiplus::Size;
 using Gdiplus::Status;
 
+using std::make_unique;
+using std::unique_ptr;
+
 using std::any;
 using std::any_cast;
 using std::bad_any_cast;
+using std::make_any;
+
 using std::exception;
 using std::function;
+
 using std::string;
+using std::wstring;
+
 using std::unordered_map;
 using std::vector;
-using std::wstring;
 
 using namespace std::literals;
 
