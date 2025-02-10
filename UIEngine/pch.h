@@ -34,6 +34,8 @@ using std::any_cast;
 using std::bad_any_cast;
 using std::exception;
 using std::function;
+using std::make_any;
+using std::nullptr_t;
 using std::string;
 using std::unordered_map;
 using std::vector;

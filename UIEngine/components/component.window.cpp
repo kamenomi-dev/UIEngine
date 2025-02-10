@@ -7,22 +7,21 @@ using namespace Engine::Component;
 // Component Initialization
 
 CWindow::CWindow(vector<Utils::PropertyPair> pairs) : CBase(pairs) {
-    SetPropertyByValue(L"titleText", L"Window."s);
-    SetPropertyByValue(L"classText", L"UIEngine.Window"s);
-    SetPropertyByValue(L"windowRect", Rect(0, 0, 800, 600));
-    SetPropertyByValue(L"parentWindow", nullptr);
-    SetPropertyByValue(L"isOwnerWindow", false);
+    SetPropertyIfNotExistByValue(L"titleText", L"Window."s);
+    SetPropertyIfNotExistByValue(L"classText", L"UIEngine.Window"s);
+    SetPropertyIfNotExistByValue(L"windowRect", make_any<Rect>(0, 0, 800, 600));
+    SetPropertyIfNotExistByValue(L"parentWindow", (CWindow*)nullptr);
+    SetPropertyIfNotExistByValue(L"isOwnerWindow", false);
 
+    auto a = GetPropertyTyped<Rect>(L"windowRect");
     SetPropertyByValue(L"componentRect", GetPropertyTyped<Rect>(L"windowRect"));
 
-    auto a = GetPropertyTyped<wstring>(L"classText");
-
     __RegisterClass();
-
-    const auto rect = CProperty_GetProperty(L"windowRect", Rect);
+    
+    const auto& rect = GetPropertyTyped<Rect>(L"windowRect");
     SetComponentSize({rect.Width, rect.Height});
 
-    const auto pParent = CProperty_GetProperty(L"parentWindow", CWindow*);
+    const auto pParent = any_cast<CWindow*>(GetProperty(L"parentWindow"));
     HWND       hParent = NULL;
     if (pParent != nullptr) {
         hParent = pParent->GetWindowHandle();
@@ -63,7 +62,7 @@ void CWindow::__RegisterClass() {
     classInfo.cbSize        = sizeof WNDCLASSEXW;
     classInfo.hInstance     = Engine::hModuleInstance;
     classInfo.lpfnWndProc   = &UIManager::WindowsMessageProcessor;
-    classInfo.lpszClassName = CProperty_GetProperty(L"classText", wstring).c_str();
+    classInfo.lpszClassName = GetPropertyTyped<wstring>(L"classText").c_str();
 
     (RegisterClassExW(&classInfo));
     const auto err = GetLastError();
@@ -92,50 +91,45 @@ void CWindow::SetWindowOwner(CWindow* pOwner) {
 // Component Rectangle Getter/Setter
 
 void CWindow::SetWindowSize(Size newSize, bool isNative) {
-    auto winRect = CProperty_GetProperty(L"windowRect", Rect);
-    auto compRect = CProperty_GetProperty(L"componentRect", Rect);
+    auto& windowRect    = GetPropertyTyped<Rect>(L"windowRect");
+    auto& componentRect = GetPropertyTyped<Rect>(L"componentRect");
 
-    winRect.Width = compRect.Width = newSize.Width;
-    winRect.Height = compRect.Height = newSize.Height;
-
-    SetPropertyByValue(L"windowRect", winRect);
-    SetPropertyByValue(L"componentRect", compRect);
+    windowRect.Width = componentRect.Width = newSize.Width;
+    windowRect.Height = componentRect.Height = newSize.Height;
 
     __UpdateRectangle(isNative);
 }
 
 void CWindow::SetWindowPosition(Point newPosition, bool isNative) {
-    auto winRect = CProperty_GetProperty(L"windowRect", Rect);
+    auto& windowRect = GetPropertyTyped<Rect>(L"windowRect");
 
-    winRect.X = newPosition.X;
-    winRect.Y = newPosition.Y;
-
-    SetPropertyByValue(L"windowRect", winRect);
+    windowRect.X = newPosition.X;
+    windowRect.Y = newPosition.Y;
 
     __UpdateRectangle(isNative);
 }
 
 Size CWindow::GetWindowSize() const {
-    auto rect = CProperty_GetProperty(L"windowRect", Rect);
-    Size  retSize{};
+    auto& windowRect = GetPropertyTyped<Rect>(L"windowRect");
+    Size  size{};
 
-    rect.GetSize(&retSize);
+    windowRect.GetSize(&size);
 
-    return retSize;
+    return size;
 }
 
 Point CWindow::GetWindowPosition() const {
-    auto rect = CProperty_GetProperty(L"windowRect", Rect);
-    Point retPosition{};
+    auto& windowRect = GetPropertyTyped<Rect>(L"windowRect");
+    Point position{};
 
-    rect.GetLocation(&retPosition);
+    windowRect.GetLocation(&position);
 
-    return retPosition;
+    return position;
 }
 
 void CWindow::__UpdateRectangle(bool isNative) {
     static Rect lastRect{};
-    static auto currRect = CProperty_GetProperty(L"componentRect", Rect);
+    auto&       currRect = GetPropertyTyped<Rect>(L"componentRect");
 
     if (not lastRect.Equals(currRect)) {
 

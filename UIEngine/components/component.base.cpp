@@ -12,7 +12,7 @@ CBase::CBase(vector<Utils::PropertyPair> pairs)
   _pChildComponents(new std::vector<CBase*>) {
     SetPropertyIfNotExistByValue(L"visible", false);
     SetPropertyIfNotExistByValue(L"disabled", false);
-    SetPropertyIfNotExistByValue(L"componentRect", Rect({0, 0, 800, 600}));
+    SetPropertyIfNotExistByValue(L"componentRect", make_any<Rect>(0, 0, 800, 600));
     SetPropertyIfNotExistByValue(L"componentLabel", L"UIEngine.Base");
 }
 
@@ -24,44 +24,41 @@ wstring CBase::GetComponentClass() const { return L"Base"; }
 
 void CBase::SetComponentLabel(wstring newLabel) { SetPropertyIfNotExistByValue(L"componentLabel", newLabel); }
 
-wstring CBase::GetComponentLabel() const { return CProperty_GetProperty(L"componentLabel", wstring); }
+wstring CBase::GetComponentLabel() const { return GetPropertyTyped<wstring>(L"componentLabel"); }
 
 unordered_map<wstring, any>& CBase::GetComponentData() { return GetPropertyData(); }
 
 // Component Rectangle Setter/Getter
 
 void CBase::SetComponentSize(Size newSize) {
-    auto rect = CProperty_GetProperty(L"componentRect", Rect);
-    rect.Width  = newSize.Width;
-    rect.Height = newSize.Height;
-
-    SetPropertyByValue(L"componentRect", rect);
+    auto& componentRect  = GetPropertyTyped<Rect>(L"componentRect");
+    componentRect.Width  = newSize.Width;
+    componentRect.Height = newSize.Height;
 }
 
 void CBase::SetComponentPosition(Point newPosition) {
-    auto rect = CProperty_GetProperty(L"componentRect", Rect);
-    rect.X    = newPosition.X;
-    rect.Y    = newPosition.Y;
+    auto& componentRect = GetPropertyTyped<Rect>(L"componentRect");
 
-    SetPropertyByValue(L"componentRect", rect);
+    componentRect.X = newPosition.X;
+    componentRect.Y = newPosition.Y;
 }
 
 Size CBase::GetComponentSize() const {
-    const auto rect = CProperty_GetProperty(L"componentRect", Rect);
-    Size       retSize{};
+    const auto& componentRect = GetPropertyTyped<Rect>(L"componentRect");
+    Size        returnSize{};
 
-    rect.GetSize(&retSize);
+    componentRect.GetSize(&returnSize);
 
-    return retSize;
+    return returnSize;
 }
 
 Point CBase::GetComponentPosition() const {
-    const auto rect = CProperty_GetProperty(L"componentRect", Rect);
-    Point      retPosition{};
+    const auto& componentRect = GetPropertyTyped<Rect>(L"componentRect");
+    Point      returnPosition{};
 
-    rect.GetLocation(&retPosition);
+    componentRect.GetLocation(&returnPosition);
 
-    return retPosition;
+    return returnPosition;
 }
 
 // Component Family

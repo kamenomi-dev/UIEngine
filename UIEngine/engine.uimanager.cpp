@@ -69,9 +69,9 @@ CWindow* UIManager::CreateCentralWindow(wstring titleText, wstring className, Si
 
 CWindow* UIManager::CreateNormalWindow(wstring titleText, wstring className, Rect windowRect, CWindow* parentWindow) {
     auto newWindow = new CWindow({
-        {L"titleText",    new wstring(titleText)},
-        {L"classText",    new wstring(className)},
-        {L"windowRect",   new Rect(windowRect)  },
+        {L"titleText",    (titleText)},
+        {L"classText",    (className)},
+        {L"windowRect",   Rect(windowRect)  },
         {L"parentWindow", parentWindow          }
     });
 
@@ -264,7 +264,7 @@ inline static CBase* __TryHitTestFromPoint(
     vector<CBase*>* currCompChildren,
     vector<CBase*>* resultComponents
 ) {
-    auto currentRect = CProperty_GetProperty_WithInstance(currComp, L"componentRect", Rect);
+    auto& currentRect = currComp->GetPropertyTyped<Rect>(L"componentRect");
 
     if (currentRect.Contains(*(Point*)targetPoint)) {
 
