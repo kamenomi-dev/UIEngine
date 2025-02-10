@@ -172,7 +172,7 @@ LRESULT UIManager::WindowsMessageProcessor(HWND hWnd, UINT uMsg, WPARAM wParam, 
 
         paintStruct.rcPaint;
 
-        /*
+        
         pWindow->Render(graphics);
 
         Gdiplus::Font       font(L"Segoe UI", 16);
@@ -181,7 +181,7 @@ LRESULT UIManager::WindowsMessageProcessor(HWND hWnd, UINT uMsg, WPARAM wParam, 
 
         graphics.DrawString(hoveredCompLabel.c_str(), hoveredCompLabel.length(), &font, {0, 0}, &brush);
         graphics.FillRectangle(&mouseBrush, Rect({ptMouse.X - 4, ptMouse.Y - 8, 8, 16}));
-        */
+        
 
         swapBuffer->Present(hTargetDC);
         EndPaint(hWnd, &paintStruct);

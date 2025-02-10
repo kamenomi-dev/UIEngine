@@ -13,7 +13,7 @@ CBase::CBase(vector<Utils::PropertyPair> pairs)
     SetPropertyIfNotExistByValue(L"visible", false);
     SetPropertyIfNotExistByValue(L"disabled", false);
     SetPropertyIfNotExistByValue(L"componentRect", make_any<Rect>(0, 0, 800, 600));
-    SetPropertyIfNotExistByValue(L"componentLabel", L"UIEngine.Base");
+    SetPropertyIfNotExistByValue(L"componentLabel", L"UIEngine.Base "s + std::to_wstring(rand() % time(0)));
 }
 
 CBase::~CBase() {}
@@ -54,7 +54,7 @@ Size CBase::GetComponentSize() const {
 
 Point CBase::GetComponentPosition() const {
     const auto& componentRect = GetPropertyTyped<Rect>(L"componentRect");
-    Point      returnPosition{};
+    Point       returnPosition{};
 
     componentRect.GetLocation(&returnPosition);
 

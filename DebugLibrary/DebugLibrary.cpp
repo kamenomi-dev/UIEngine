@@ -17,19 +17,19 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
         pWindowMain->SetComponentLabel(L"Debug window. Main");
 
         const auto floor1 = new Engine::Component::CBase({
-            {L"componentRect", new Rect({0, 0, 400, 600})}
+            {L"componentRect", Rect({0, 0, 400, 600})}
         });
         floor1->SetComponentLabel(L"floor 1 - Main");
         pWindowMain->SetChildComponent(floor1);
 
         const auto floor2 = new Engine::Component::CBase({
-            {L"componentRect", new Rect({0, 0, 400, 300})}
+            {L"componentRect", Rect({0, 0, 400, 300})}
         });
         floor2->SetComponentLabel(L"floor 2 - Main");
         floor1->SetChildComponent(floor2);
 
         const auto floor3 = new Engine::Component::CBase({
-            {L"componentRect", new Rect({0, 0, 200, 300})}
+            {L"componentRect", Rect({0, 0, 200, 300})}
         });
         floor3->SetComponentLabel(L"floor 3 - Main");
         floor2->SetChildComponent(floor3);
@@ -43,19 +43,19 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
         pWindowSub->SetComponentLabel(L"Debug window. Sub");
 
         const auto floor1 = new Engine::Component::CBase({
-            {L"componentRect", new Rect({0, 0, 400, 600})}
+            {L"componentRect", Rect({0, 0, 400, 600})}
         });
         floor1->SetComponentLabel(L"floor 1 - Sub");
         pWindowSub->SetChildComponent(floor1);
 
         const auto floor2 = new Engine::Component::CBase({
-            {L"componentRect", new Rect({0, 0, 400, 300})}
+            {L"componentRect", Rect({0, 0, 400, 300})}
         });
         floor2->SetComponentLabel(L"floor 2 - Sub");
         floor1->SetChildComponent(floor2);
 
         const auto floor3 = new Engine::Component::CBase({
-            {L"componentRect", new Rect({0, 0, 200, 300})}
+            {L"componentRect", Rect({0, 0, 200, 300})}
         });
         floor3->SetComponentLabel(L"floor 3 - Sub");
         floor2->SetChildComponent(floor3);
