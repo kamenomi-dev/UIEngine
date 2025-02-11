@@ -2,6 +2,18 @@
 #ifndef PCH_H
 #define PCH_H
 
+#pragma message("Compiling " __DATE__)
+#pragma message("Last modified on " __TIMESTAMP__)
+
+// Skip Something.
+
+#ifndef ___NO_SKIP_4251
+#pragma warning(disable : 4251)
+#pragma message("Oh! The library has ignored C4251!"                                                                   \
+                " You should add '___NO_SKIP_4251' marco"                                                              \
+                " at the topest level of file if you get in trouble.")
+#endif
+
 // Must support.
 #ifndef UNICODE
 #define UNICODE

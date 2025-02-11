@@ -21,7 +21,6 @@ using namespace Defines;
 class UIENGINE_API CProperty {
 public:
     CProperty(const vector<PropertyPair>&);
-    ~CProperty();
 
     inline void SetPropertyByValue(const wstring&, any);
     inline void SetPropertyByRef(const wstring&, any&);
@@ -31,8 +30,7 @@ public:
 
     inline any& GetProperty(const wstring& key) {
         const auto it = _propertyData->find(key);
-        if (it == _propertyData->end())
-        {
+        if (it == _propertyData->end()) {
             DebugBreak();
             abort();
         }
@@ -40,16 +38,15 @@ public:
     }
     inline const any& GetProperty(const wstring& key) const {
         const auto it = _propertyData->find(key);
-        if (it == _propertyData->end())
-        {
+        if (it == _propertyData->end()) {
             DebugBreak();
             abort();
         }
         return it->second;
     }
 
-    auto& GetPropertyData() { return *_propertyData; }
-    auto& GetPropertyData() const { return *_propertyData; }
+    inline auto& GetPropertyData() { return *_propertyData; }
+    inline auto& GetPropertyData() const { return *_propertyData; }
 
     template <class T>
     auto& GetPropertyTyped(const wstring& key) {
@@ -61,7 +58,7 @@ public:
     }
 
 private:
-    unordered_map<wstring, any>* _propertyData;
+    unique_ptr<unordered_map<wstring, any>> _propertyData;
 };
 
 } // namespace Utils

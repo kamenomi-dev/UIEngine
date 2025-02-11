@@ -7,12 +7,25 @@ namespace Engine {
 
 class UIENGINE_API UIManager final {
 public:
-    static UIManager* Initialize(HINSTANCE hInstance);
-    static UIManager* Get();
 
-    ~UIManager();
+  friend class unique_ptr<UIManager>;
 
-    HINSTANCE GetProcessInstance() const;
+    inline static auto& Initialize(HINSTANCE hInstance) {
+        if (__hInstance) {
+            return __hInstance;
+        }
+
+        return __hInstance = make_unique<UIManager>(hInstance);
+    };
+
+    inline static auto& Get() {
+        CHECK_RESULT_BOOL(__hInstance);
+        return __hInstance;
+    };
+
+    ~UIManager() { Engine::Uninitialize(); };
+
+    HINSTANCE GetProcessInstance() const { return _hProcessInstance; };
 
     Component::CWindow* CreateCentralWindow(
         wstring             titleText,
@@ -28,18 +41,27 @@ public:
     );
 
     static LRESULT WindowsMessageProcessor(HWND, UINT, WPARAM, LPARAM);
-    WPARAM         StartMessageLoop();
+    inline WPARAM  StartMessageLoop();
 
 private:
-    static UIManager*                         __hInstance;
+    static unique_ptr<UIManager> __hInstance;
 
-    HINSTANCE                                 _hProcessInstance;
-    unordered_map<HWND, Component::CWindow*>* _windowMap;// TODO: ¸ÄÎªÆÕÍ¨×Ö¶Î
-    unordered_map<HWND, Component::CWindow*>* _mainWindowMap;
+    UIManager(HINSTANCE hInstance) {
+        if (__hInstance) {
+            DebugBreak();
+            abort();
+            return;
+        }
 
-    UIManager(HINSTANCE hInstance);
+        _hProcessInstance = hInstance;
+        Engine::Initialize(hInstance);
+    };
 
-    void __InsertWindowMap(HWND, Component::CWindow*);
+    HINSTANCE                                _hProcessInstance;
+    unordered_map<HWND, Component::CWindow*> _windowMap{};
+    unordered_map<HWND, Component::CWindow*> _mainWindowMap{};
+
+    inline void __InsertWindowMap(HWND, Component::CWindow*);
 };
 
 } // namespace Engine

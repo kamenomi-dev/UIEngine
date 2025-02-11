@@ -10,7 +10,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
     UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(lpCmdLine);
 
-    const auto pUIManager = Engine::UIManager::Initialize(hInstance);
+    const auto& pUIManager = Engine::UIManager::Initialize(hInstance);
 
     const auto pWindowMain = pUIManager->CreateCentralWindow(L"Debug Library Window. - Main");
     {
