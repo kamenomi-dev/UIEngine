@@ -36,11 +36,10 @@
 #include <functional>
 #include <iostream>
 #include <memory>
+#include <ranges>
 #include <string>
 #include <unordered_map>
 #include <vector>
-
-using std::reverse;
 
 using Gdiplus::Point;
 using Gdiplus::Rect;
@@ -57,13 +56,16 @@ using std::make_any;
 
 using std::exception;
 using std::function;
+using std::runtime_error;
 
 using std::string;
 using std::wstring;
 
+using std::reverse;
 using std::unordered_map;
 using std::vector;
 
+namespace views = std::views;
 using namespace std::literals;
 
 #endif // PCH_H

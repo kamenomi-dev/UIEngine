@@ -24,22 +24,16 @@
 using namespace Engine::Logic;
 using namespace Engine::Component;
 
-// Component Tree
-
-CComponentTree::CComponentTree(CWindow* pRootWindow) : _pRootWindow(pRootWindow) {}
-
-CWindow* CComponentTree::GetRootWindow() const { return _pRootWindow; }
-
 // Compenont Tree - -  Hittest Implement
 
 inline static void __TryHitTestConditionNext(
     LPVOID                 lParam,
     TTryHittestCondition&& conditionFunc,
-    vector<CBase*>*        components,
-    vector<CBase*>*        resultComponents
+    vector<CBase*>&        components,
+    vector<CBase*>&        resultComponents
 ) {
-    for (size_t idx = 0; idx < components->size(); idx++) {
-        auto currComp = (*components)[idx];
+    for (size_t idx = 0; idx < components.size(); idx++) {
+        auto currComp = components[idx];
         if (currComp == nullptr) {
             continue;
         }
@@ -47,7 +41,7 @@ inline static void __TryHitTestConditionNext(
         auto resultComp = conditionFunc(lParam, currComp, currComp->GetChildCompnents(), resultComponents);
 
         if (resultComp != nullptr) {
-            resultComponents->push_back(resultComp);
+            resultComponents.push_back(resultComp);
         }
     }
 };
@@ -55,11 +49,11 @@ inline static void __TryHitTestConditionNext(
 inline static CBase* __TryHitTestFromRect(
     LPVOID          pTargetRect,
     CBase*          currComp,
-    vector<CBase*>* currCompChildren,
-    vector<CBase*>* resultComponents
+    vector<CBase*>& currCompChildren,
+    vector<CBase*>& resultComponents
 ) {
-    auto& targetRect  = *((Rect*)pTargetRect);
-    auto& currentRect = currComp->GetPropertyTyped<Rect>(L"componentRect");
+    const auto& targetRect  = *((Rect*)pTargetRect);
+    const auto& currentRect = currComp->GetPropertyTyped<Rect>(L"componentRect");
 
     if (currentRect.IntersectsWith(targetRect)) {
 
@@ -73,11 +67,11 @@ inline static CBase* __TryHitTestFromRect(
 inline static CBase* __TryHitTestFromPoint(
     LPVOID          pTargetPoint,
     CBase*          currComp,
-    vector<CBase*>* currCompChildren,
-    vector<CBase*>* resultComponents
+    vector<CBase*>& currCompChildren,
+    vector<CBase*>& resultComponents
 ) {
-    auto& targetPoint = *(Point*)pTargetPoint;
-    auto& currentRect = currComp->GetPropertyTyped<Rect>(L"componentRect");
+    const auto& targetPoint = *(Point*)pTargetPoint;
+    const auto& currentRect = currComp->GetPropertyTyped<Rect>(L"componentRect");
 
     if (currentRect.Contains(targetPoint)) {
 
@@ -99,7 +93,7 @@ vector<CBase*> CComponentTree::TryHitTest(Point targetPoint) {
 vector<CBase*> CComponentTree::TryHitTestWithCondition(TTryHittestCondition conditionFunc, LPVOID lParam) {
     vector<CBase*> resultComps{};
 
-    resultComps.push_back(conditionFunc(lParam, _pRootWindow, _pRootWindow->GetChildCompnents(), &resultComps));
+    resultComps.push_back(conditionFunc(lParam, _pRootWindow, _pRootWindow->GetChildCompnents(), resultComps));
 
     return resultComps;
 }

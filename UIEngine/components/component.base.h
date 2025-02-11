@@ -8,39 +8,72 @@ namespace Component {
 
 class UIENGINE_API CBase : public Utils::CProperty {
 public:
-    CBase(vector<Utils::PropertyPair>);
-    ~CBase();
-
     friend class CWindow;
 
+    CBase(vector<Utils::PropertyPair> pairs) : CProperty(pairs) {
+        SetPropertyIfNotExistByValue(L"visible", false);
+        SetPropertyIfNotExistByValue(L"disabled", false);
+        SetPropertyIfNotExistByValue(L"componentRect", make_any<Rect>(0, 0, 800, 600));
+        SetPropertyIfNotExistByValue(L"componentLabel", L"UIEngine.Base "s + std::to_wstring(rand() % time(0)));
+    }
+
 public:
-    inline void            SetChildComponent(CBase*);
-    inline void            SetChildComponents(vector<CBase*>);
-    inline CBase*          GetChildCompnent();
-    inline vector<CBase*>* GetChildCompnents();
-    inline CBase*          GetParentComponent();
+    inline void SetChildComponent(CBase* pComponent) {
+        CHECK_RESULT_BOOL(pComponent->GetComponentClass() != L"Window");
 
-    unordered_map<wstring, any>& GetComponentData();
+        pComponent->__SetParentComponent(this);
+        _pChildComponents.push_back(pComponent);
+    };
+    inline void SetChildComponents(vector<CBase*> components) {
+        _pChildComponents.insert(_pChildComponents.end(), components.begin(), components.end());
+    };
+    inline vector<CBase*>& GetChildCompnents() { return _pChildComponents; };
+    inline CBase*          GetParentComponent() { return _pParentComponent; };
 
-    inline virtual wstring GetComponentClass() const;
-    void                   SetComponentLabel(wstring);
-    wstring                GetComponentLabel() const;
+    inline unordered_map<wstring, any>& GetComponentData() { return GetPropertyData(); }
 
-    void         SetComponentSize(Size);
-    void         SetComponentPosition(Point);
-    inline Rect  GetComponentRect() const;
-    inline Size  GetComponentSize() const;
-    inline Point GetComponentPosition() const;
+    inline virtual wstring GetComponentClass() const { return L"Base"s; };
+    inline wstring         GetComponentLabel() const { return GetPropertyTyped<wstring>(L"componentLabel"); };
+    void                   SetComponentLabel(wstring newLabel) { SetPropertyByValue(L"componentLabel", newLabel); }
+
+    void SetComponentSize(Size newSize) {
+        auto& componentRect  = GetPropertyTyped<Rect>(L"componentRect");
+        componentRect.Width  = newSize.Width;
+        componentRect.Height = newSize.Height;
+    }
+    void SetComponentPosition(Point newPosition) {
+        auto& componentRect = GetPropertyTyped<Rect>(L"componentRect");
+
+        componentRect.X = newPosition.X;
+        componentRect.Y = newPosition.Y;
+    }
+    inline Rect GetComponentRect() const { return GetPropertyTyped<Rect>(L"componentRect"); };
+    inline Size GetComponentSize() const {
+        const auto& componentRect = GetPropertyTyped<Rect>(L"componentRect");
+        Size        returnSize{};
+
+        componentRect.GetSize(&returnSize);
+
+        return returnSize;
+    }
+    inline Point GetComponentPosition() const {
+        const auto& componentRect = GetPropertyTyped<Rect>(L"componentRect");
+        Point       returnPosition{};
+
+        componentRect.GetLocation(&returnPosition);
+
+        return returnPosition;
+    };
 
     virtual void    Render(Gdiplus::Graphics&);
     virtual LRESULT __Native_ComponentMessageProcessor(UINT uMsg, WPARAM wParam, LPARAM lParam, bool& bIsReturn);
     virtual void    __Native_TransformMessageProcessor(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 private:
-    CBase*          _pParentComponent;
-    vector<CBase*>* _pChildComponents;
+    CBase*         _pParentComponent{nullptr};
+    vector<CBase*> _pChildComponents{};
 
-    inline void __SetParentComponent(CBase*);
+    inline void __SetParentComponent(CBase* pComponent) { _pParentComponent = pComponent; }
 };
 } // namespace Component
 } // namespace Engine

@@ -83,37 +83,44 @@ void UIManager::__InsertWindowMap(HWND hWnd, Component::CWindow* pWindow) {
 
 // UIManager Message Processor
 
+inline void __HandleMouseMove(HWND hCurrentWindow, LPARAM lParam) {
+    static unordered_map<HWND, CBase*> lastComponentMap{};
+
+    auto& currentWindow  = *UIManager::Get().GetWindowMap()[hCurrentWindow];
+    auto& pLastComponent = lastComponentMap[hCurrentWindow];
+
+    const Point ptCurrMouse    = {GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)};
+    const auto  pNextComponent = currentWindow.GetComponentTree()->TryHitTest(ptCurrMouse)[0];
+
+    if (pLastComponent == pNextComponent) {
+        return;
+    }
+
+    if (pLastComponent) {
+        const auto posComponent = pLastComponent->GetComponentPosition();
+        const auto ptMouse      = ptCurrMouse - posComponent;
+
+        pLastComponent->__Native_TransformMessageProcessor(CM_MOUSE_LEAVE, NULL, (LPARAM)&ptMouse);
+    }
+
+    if (pNextComponent) {
+        pLastComponent = pNextComponent;
+
+        const auto posComponent = pNextComponent->GetComponentPosition();
+        const auto ptMouse      = ptCurrMouse - posComponent;
+
+        pNextComponent->__Native_TransformMessageProcessor(CM_MOUSE_HOVER, NULL, (LPARAM)&ptMouse);
+    }
+}
+
 LRESULT UIManager::WindowsMessageProcessor(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
-    static auto& pUIManager    = *UIManager::Get();
+    static auto& pUIManager    = UIManager::Get();
     auto&        currentWindow = *pUIManager._windowMap[hWnd];
     auto         bNoop         = false;
 
-    static Point   ptMouse{};
-    static wstring hoveredCompLabel{};
-
     if (uMsg == WM_MOUSEMOVE) {
-        ptMouse = {GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)};
-
-        auto result = currentWindow.GetComponentTree()->TryHitTest(ptMouse);
-
-        const auto finalWindow = result.at(0);
-        if (finalWindow != nullptr) {
-            hoveredCompLabel = finalWindow->GetComponentLabel();
-        }
-
-        RECT rect{};
-        rect.left   = 0;
-        rect.top    = 0;
-        rect.right  = 200;
-        rect.bottom = 32;
-        InvalidateRect(hWnd, &rect, 1);
-
-        rect.left   = ptMouse.X - 4;
-        rect.top    = ptMouse.Y - 8;
-        rect.right  = ptMouse.X + 4;
-        rect.bottom = ptMouse.Y + 8;
-        InvalidateRect(hWnd, &rect, 1);
+        __HandleMouseMove(hWnd, lParam);
     }
 
     if (uMsg == WM_CLOSE) {
@@ -164,15 +171,4 @@ LRESULT UIManager::WindowsMessageProcessor(HWND hWnd, UINT uMsg, WPARAM wParam, 
     }
 
     return DefWindowProcW(hWnd, uMsg, wParam, lParam);
-}
-
-inline WPARAM UIManager::StartMessageLoop() {
-    MSG msgStruct{};
-
-    while (GetMessage(&msgStruct, nullptr, 0, 0)) {
-        TranslateMessage(&msgStruct);
-        DispatchMessage(&msgStruct);
-    }
-
-    return msgStruct.wParam;
 }

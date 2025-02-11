@@ -17,9 +17,9 @@ namespace Defines {
 
 typedef Component::CBase*(TTryHittestCondition)(LPVOID,
                                                 Component::CBase*,
-                                                vector<Component::CBase*>*,
-                                                vector<Component::CBase*>*);
-typedef void(TTryHittestConditionNext)(LPVOID, TTryHittestCondition, vector<Component::CBase*>*, vector<Component::CBase*>*);
+                                                vector<Component::CBase*>&,
+                                                vector<Component::CBase*>&);
+typedef void(TTryHittestConditionNext)(LPVOID, TTryHittestCondition, vector<Component::CBase*>&, vector<Component::CBase*>&);
 
 } // namespace Defines
 
@@ -27,15 +27,15 @@ using namespace Defines;
 
 class UIENGINE_API CComponentTree final {
 public:
-    CComponentTree(Component::CWindow* pRootWindow);
+    CComponentTree(Component::CWindow* pRootWindow) : _pRootWindow(pRootWindow) {}
 
-    Component::CWindow*       GetRootWindow() const;
+    Component::CWindow*       GetRootWindow() const { return _pRootWindow; };
     vector<Component::CBase*> TryHitTest(Rect);
     vector<Component::CBase*> TryHitTest(Point);
     vector<Component::CBase*> TryHitTestWithCondition(TTryHittestCondition, LPVOID lParam);
 
 private:
-    Component::CWindow* _pRootWindow;
+    Component::CWindow* _pRootWindow{nullptr};
 };
 } // namespace Logic
 } // namespace Engine

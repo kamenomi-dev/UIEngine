@@ -6,7 +6,6 @@ using Engine::Render::SwapBuffer;
 using namespace Engine::Logic;
 using namespace Engine::Component;
 
-// Component Initialization
 
 CWindow::CWindow(vector<Utils::PropertyPair> pairs) : CBase(pairs) {
     SetPropertyByValue(L"componentLabel", L"UIEngine.Window"s);
@@ -31,11 +30,6 @@ CWindow::CWindow(vector<Utils::PropertyPair> pairs) : CBase(pairs) {
     _renderSwapBuffer = make_unique<SwapBuffer>(__CreateWindow());
 }
 
-CWindow::~CWindow() {
-    __DeleteWindow();
-    __UnregisterClass();
-}
-
 void CWindow::__RegisterClass() {
     WNDCLASSEXW classInfo{};
     classInfo.cbSize        = sizeof WNDCLASSEXW;
@@ -47,8 +41,6 @@ void CWindow::__RegisterClass() {
     const auto err = GetLastError();
     _wndClassInfo  = classInfo;
 }
-
-void CWindow::__UnregisterClass() { (RegisterClassExW(&_wndClassInfo)); }
 
 HWND CWindow::__CreateWindow() {
     const auto& rect    = GetPropertyTyped<Rect>(L"windowRect");
@@ -74,7 +66,7 @@ HWND CWindow::__CreateWindow() {
         rect.Height,
         hParent,
         NULL,
-        UIManager::Get()->GetProcessInstance(),
+        UIManager::Get().GetProcessInstance(),
         nullptr
     );
 
@@ -85,127 +77,7 @@ HWND CWindow::__CreateWindow() {
     return hWnd;
 }
 
-void CWindow::__DeleteWindow() { CloseWindow(_hSelfWindow); }
-
-// Component Property Getter/Setter
-
-unique_ptr<CComponentTree>& CWindow::GetComponentTree() { return _componentTree; }
-
-wstring CWindow::GetComponentClass() const { return L"Window"; }
-
-bool CWindow::IsOwnerWindow() const { return GetPropertyTyped<bool>(L"isOwnerWindow"); }
-
-HWND CWindow::GetWindowHandle() const {
-    CHECK_RESULT_BOOL(_hSelfWindow);
-    return _hSelfWindow;
-}
-
-void CWindow::SetWindowOwner(CWindow* pOwner) {
-    SetPropertyByValue(L"parentWindow", pOwner);
-    SetPropertyByValue(L"isOwnerWindow", false);
-}
-
-// Component Rectangle Getter/Setter
-
-void CWindow::SetWindowSize(Size newSize) {
-    auto& windowRect    = GetPropertyTyped<Rect>(L"windowRect");
-    auto& componentRect = GetPropertyTyped<Rect>(L"componentRect");
-
-    windowRect.Width = componentRect.Width = newSize.Width;
-    windowRect.Height = componentRect.Height = newSize.Height;
-
-    SetWindowPos(
-        _hSelfWindow,
-        NULL,
-        windowRect.X,
-        windowRect.Y,
-        windowRect.Width,
-        windowRect.Height,
-        SWP_NOOWNERZORDER
-    );
-    __UpdateRectangle();
-}
-
-void CWindow::SetWindowPosition(Point newPosition) {
-    auto& windowRect = GetPropertyTyped<Rect>(L"windowRect");
-
-    windowRect.X = newPosition.X;
-    windowRect.Y = newPosition.Y;
-
-    SetWindowPos(
-        _hSelfWindow,
-        NULL,
-        windowRect.X,
-        windowRect.Y,
-        windowRect.Width,
-        windowRect.Height,
-        SWP_NOOWNERZORDER
-    );
-    __UpdateRectangle();
-}
-
-Size CWindow::GetWindowSize() const {
-    auto& windowRect = GetPropertyTyped<Rect>(L"windowRect");
-    Size  size{};
-
-    windowRect.GetSize(&size);
-
-    return size;
-}
-
-Point CWindow::GetWindowPosition() const {
-    auto& windowRect = GetPropertyTyped<Rect>(L"windowRect");
-    Point position{};
-
-    windowRect.GetLocation(&position);
-
-    return position;
-}
-
-void CWindow::__UpdateRectangle() {
-    static Rect lastRect{};
-    const auto& currRect = GetPropertyTyped<Rect>(L"componentRect");
-
-    if (not lastRect.Equals(currRect)) {
-
-        if (lastRect.Width != currRect.Width || lastRect.Height != currRect.Height) {
-            _renderSwapBuffer->RefreshSize();
-        }
-
-        lastRect = currRect;
-    }
-}
-
-// Component Render -- How?
-
-unique_ptr<SwapBuffer>& CWindow::GetWindowSwapBuffer() { return _renderSwapBuffer; }
-
-void CWindow::Render(Gdiplus::Graphics& grap) {
-    //static auto bgColor = Gdiplus::Color(3, 3, 15);
-    //grap.Clear(bgColor);
-    CBase::Render(grap);
-}
-
-void CWindow::__Native_SetWindowSize(Size newSize) {
-    auto& windowRect    = GetPropertyTyped<Rect>(L"windowRect");
-    auto& componentRect = GetPropertyTyped<Rect>(L"componentRect");
-
-    windowRect.Width = componentRect.Width = newSize.Width;
-    windowRect.Height = componentRect.Height = newSize.Height;
-
-    __UpdateRectangle();
-}
-
-void CWindow::__Native_SetWindowPosition(Point newPosition) {
-    auto& windowRect = GetPropertyTyped<Rect>(L"windowRect");
-
-    windowRect.X = newPosition.X;
-    windowRect.Y = newPosition.Y;
-
-    __UpdateRectangle();
-}
-
-// Component Message Processor
+void CWindow::Render(Gdiplus::Graphics& grap) { CBase::Render(grap); }
 
 LRESULT
 inline CWindow::__Native_ComponentMessageProcessor(
@@ -217,30 +89,29 @@ inline CWindow::__Native_ComponentMessageProcessor(
 ) {
     if (uMsg == WM_PAINT) {
         PAINTSTRUCT paintStruct{};
+        const HDC   hTargetDC = ::BeginPaint(hWnd, &paintStruct);
+        const auto& paintRect = paintStruct.rcPaint;
 
-        auto       hTargetDC = BeginPaint(hWnd, &paintStruct);
-        const auto paintRect = paintStruct.rcPaint;
+        auto&                   swapBuffer = GetWindowSwapBuffer();
+        const Gdiplus::Graphics graphics{swapBuffer.GetRenderableDC()};
 
-        auto& swapBuffer = *GetWindowSwapBuffer().get();
-        auto  graphics   = make_unique<Gdiplus::Graphics>(swapBuffer.GetRenderableDC());
+        const auto renderableRect = Gdiplus::Rect{
+            paintRect.left,
+            paintRect.top,
+            paintRect.right - paintRect.left,
+            paintRect.bottom - paintRect.top
+        };
 
-        const auto gdipRect =
-            Rect(paintRect.left, paintRect.top, paintRect.right - paintRect.left, paintRect.bottom - paintRect.top);
+        auto coveredComponents = _componentTree->TryHitTest(renderableRect) | views::reverse
+                               | views::filter([](const auto& p) { return p != nullptr; });
 
-        auto coveredComponents = _componentTree.get()->TryHitTest(gdipRect);
-        reverse(coveredComponents.begin(), coveredComponents.end());
-
-        for (auto& pComponent : coveredComponents) {
-            if (pComponent == nullptr) {
-                continue;
-            }
-
-            pComponent
-                ->__Native_TransformMessageProcessor(ComponentBaseMessageEnum::CM_BASE_PAINT, NULL, (LPARAM)&graphics);
+        for (const auto& pComponent : coveredComponents) {
+            pComponent->__Native_TransformMessageProcessor(CM_PAINT, NULL, (LPARAM)&graphics);
         }
 
         swapBuffer.Present(hTargetDC);
-        EndPaint(hWnd, &paintStruct);
+
+        ::EndPaint(hWnd, &paintStruct);
     }
     return NULL;
 }

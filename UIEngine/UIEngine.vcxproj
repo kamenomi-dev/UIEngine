@@ -124,6 +124,7 @@
       <CallingConvention>Cdecl</CallingConvention>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <ForcedIncludeFiles>%(ForcedIncludeFiles)</ForcedIncludeFiles>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
