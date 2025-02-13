@@ -28,15 +28,9 @@ using namespace Engine::Render;
  *  SwapBuffer 
  */
 
-SwapBuffer::SwapBuffer(HWND hWindow)
-: _hTargetWnd(hWindow),
-  _hTargetSize({0, 0}),
-  _hTargetDC(NULL),
-  _hSwapDC(NULL),
-  _hSwapBitmap(NULL),
-  _hSwapLastBitmap(NULL) {
+SwapBuffer::SwapBuffer(HWND hWindow) : _hTargetWnd{hWindow} {
     _hTargetDC = GetDC(hWindow);
-    _hSwapDC   = CreateCompatibleDC(NULL);
+    _hSwapDC   = CreateCompatibleDC(nullptr);
 
     RefreshSize();
 };
@@ -69,11 +63,11 @@ void SwapBuffer::RefreshSize() {
 }
 
 void SwapBuffer::_DestroyOldBitmap() {
-    if (_hSwapLastBitmap != NULL) {
+    if (_hSwapLastBitmap) {
         SelectBitmap(_hSwapDC, _hSwapLastBitmap);
     }
     DeleteBitmap(_hSwapBitmap);
 
-    _hSwapBitmap     = NULL;
-    _hSwapLastBitmap = NULL;
+    _hSwapBitmap     = nullptr;
+    _hSwapLastBitmap = nullptr;
 }

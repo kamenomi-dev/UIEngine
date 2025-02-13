@@ -22,7 +22,7 @@ public:
 
     inline bool IsOwnerWindow() const { return GetPropertyTyped<bool>(L"isOwnerWindow"); }
     inline HWND GetWindowHandle() const {
-        if (_hSelfWindow == NULL) {
+        if (!_hSelfWindow) {
             throw runtime_error("Window hasn't created yet! ");
         }
 
@@ -41,7 +41,7 @@ public:
 
         SetWindowPos(
             _hSelfWindow,
-            NULL,
+            nullptr,
             windowRect.X,
             windowRect.Y,
             windowRect.Width,
@@ -58,7 +58,7 @@ public:
 
         SetWindowPos(
             _hSelfWindow,
-            NULL,
+            nullptr,
             windowRect.X,
             windowRect.Y,
             windowRect.Width,

@@ -50,10 +50,7 @@ HWND CWindow::__CreateWindow() {
         SetPropertyByValue(L"isOwnerWindow", true);
     }
 
-    HWND hParent = NULL;
-    if (pParent != nullptr) {
-        hParent = pParent->GetWindowHandle();
-    }
+    HWND hParent{pParent ? pParent->GetWindowHandle() : nullptr};
 
     const auto hWnd = CreateWindowExW(
         WS_EX_APPWINDOW,
@@ -65,7 +62,7 @@ HWND CWindow::__CreateWindow() {
         rect.Width,
         rect.Height,
         hParent,
-        NULL,
+        nullptr,
         UIManager::Get().GetProcessInstance(),
         nullptr
     );
@@ -95,7 +92,7 @@ inline CWindow::_Native_ComponentMessageProcessor(
         auto&                   swapBuffer = GetWindowSwapBuffer();
         const Gdiplus::Graphics graphics{swapBuffer.GetRenderableDC()};
 
-        const auto renderableRect = Gdiplus::Rect{
+        const Gdiplus::Rect renderableRect{
             paintRect.left,
             paintRect.top,
             paintRect.right - paintRect.left,
@@ -106,12 +103,12 @@ inline CWindow::_Native_ComponentMessageProcessor(
                                | views::filter([](const auto& p) { return p != nullptr; });
 
         for (const auto& pComponent : coveredComponents) {
-            pComponent->_Native_TransformMessageProcessor(CM_PAINT, NULL, (LPARAM)&graphics);
+            pComponent->_Native_TransformMessageProcessor(CM_PAINT, 0, (LPARAM)&graphics);
         }
 
         swapBuffer.Present(hTargetDC);
 
         ::EndPaint(hWnd, &paintStruct);
     }
-    return NULL;
+    return 0;
 }

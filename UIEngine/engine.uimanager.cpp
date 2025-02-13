@@ -32,7 +32,7 @@ unique_ptr<UIManager> UIManager::s_Instance{};
 
 CWindow* UIManager::CreateCentralWindow(wstring titleText, wstring className, Size windowSize, CWindow* parentWindow) {
     /*DEVMODEW devMode{.dmSize = sizeof DEVMODEW};
-    EnumDisplaySettingsW(NULL, ENUM_CURRENT_SETTINGS, &devMode);*/
+    EnumDisplaySettingsW(nullptr, ENUM_CURRENT_SETTINGS, &devMode);*/
     // HACK: 1.DPI感知；2.换用完善的居中判定
     const auto screenWidth  = GetSystemMetrics(SM_CXSCREEN);
     const auto screenHeight = GetSystemMetrics(SM_CYSCREEN);
@@ -97,7 +97,7 @@ static void OnMouseMove(HWND hCurrentWindow, LPARAM lParam) {
         const auto posComponent = pLastComponent->GetComponentPosition();
         const auto ptMouse      = ptCurrMouse - posComponent;
 
-        pLastComponent->_Native_TransformMessageProcessor(CM_MOUSE_LEAVE, NULL, (LPARAM)&ptMouse);
+        pLastComponent->_Native_TransformMessageProcessor(CM_MOUSE_LEAVE, 0, (LPARAM)&ptMouse);
     }
 
     if (pNextComponent) {
@@ -106,7 +106,7 @@ static void OnMouseMove(HWND hCurrentWindow, LPARAM lParam) {
         const auto posComponent = pNextComponent->GetComponentPosition();
         const auto ptMouse      = ptCurrMouse - posComponent;
 
-        pNextComponent->_Native_TransformMessageProcessor(CM_MOUSE_HOVER, NULL, (LPARAM)&ptMouse);
+        pNextComponent->_Native_TransformMessageProcessor(CM_MOUSE_HOVER, 0, (LPARAM)&ptMouse);
     }
 }
 
@@ -134,32 +134,32 @@ LRESULT UIManager::WindowsMessageProcessor(HWND hWnd, UINT uMsg, WPARAM wParam, 
                 }
             }
 
-            PostQuitMessage(NULL);
+            PostQuitMessage(0);
         }
 
-        return NULL;
+        return 0;
     }
 
     if (uMsg == WM_SIZE) {
         currentWindow._Native_SetWindowSize({GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)});
 
-        return NULL;
+        return 0;
     }
 
     if (uMsg == WM_MOVE) {
         currentWindow._Native_SetWindowPosition({GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)});
 
-        return NULL;
+        return 0;
     }
 
     // Todo, how?
     if (uMsg == WM_PAINT) {
         currentWindow._Native_ComponentMessageProcessor(hWnd, uMsg, wParam, lParam, bNoop);
-        return NULL;
+        return 0;
     }
 
     if (uMsg == WM_ERASEBKGND) {
-        return TRUE;
+        return 0;
     }
 
     LRESULT dwmResult{};

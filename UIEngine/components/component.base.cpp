@@ -18,7 +18,7 @@ void CBase::Render(Gdiplus::Graphics& graphics) {
 
 LRESULT CBase::_Native_ComponentMessageProcessor(UINT uMsg, WPARAM wParam, LPARAM lParam, bool& bIsReturn) {
     bIsReturn = false;
-    return NULL;
+    return 0;
 }
 
 void CBase::_Native_TransformMessageProcessor(UINT uMsg, WPARAM wParam, LPARAM lParam) {
