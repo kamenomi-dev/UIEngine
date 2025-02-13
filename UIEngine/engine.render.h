@@ -4,21 +4,20 @@
 #ifndef __ENGINE_RENDER_H__
 #define __ENGINE_RENDER_H__
 
-namespace Engine {
-namespace Render {
+namespace Engine::Render {
 
 // SwapBuffer .
 
 class UIENGINE_API SwapBuffer final {
 private:
-    HWND    _hTargetWnd;
-    SIZE    _hTargetSize;
-    HDC     _hTargetDC;
-    HDC     _hSwapDC;
-    HBITMAP _hSwapBitmap;
-    HBITMAP _hSwapLastBitmap;
+    HWND    _hTargetWnd{};
+    SIZE    _hTargetSize{};
+    HDC     _hTargetDC{};
+    HDC     _hSwapDC{};
+    HBITMAP _hSwapBitmap{};
+    HBITMAP _hSwapLastBitmap{};
 
-    void __DestroyOldBitmap();
+    void _DestroyOldBitmap();
 
 public:
     SwapBuffer(HWND hWindow);
@@ -30,7 +29,6 @@ public:
     bool Present(HDC);
     void RefreshSize();
 };
-} // namespace Render
-} // namespace Engine
+} // namespace Engine::Render
 
 #endif // __ENGINE_RENDER_H__

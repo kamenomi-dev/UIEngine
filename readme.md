@@ -32,4 +32,4 @@ GdiplusUI 是基于 Gdiplus 开发的 UI C++ 组件库，仅限运行在 Windows
 
 **本项目基于 GPL-3.0 开源，旨在为互联网提供更开放、安全的源代码项目。**
 
-![GPL_V3-Logo](F:\projects\UIEngine\GPL_V3-Logo.png)
+![GPL_V3-Logo](GPL_V3-Logo.png)

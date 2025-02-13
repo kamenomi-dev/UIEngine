@@ -32,4 +32,4 @@ Thanks to [晴空@QingKong-s](https://github.com/QingKong-s) for the strong supp
 
 **This project is based on GPL-3.0 open source and aims to provide a more open and secure source code project for the Internet. **
 
-![GPL_V3-Logo](F:\projects\UIEngine\GPL_V3-Logo.png)
+![GPL_V3-Logo](GPL_V3-Logo.png)

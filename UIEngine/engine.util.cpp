@@ -31,17 +31,17 @@ CProperty::CProperty(const vector<PropertyPair>& pairs) {
     }
 }
 
-inline void CProperty::SetPropertyByValue(const wstring& key, any value) { (*_propertyData)[key] = value; }
+void CProperty::SetPropertyByValue(const wstring& key, any value) { (*_propertyData)[key] = value; }
 
-inline void CProperty::SetPropertyByRef(const wstring& key, any& value) { (*_propertyData)[key].swap(value); }
+void CProperty::SetPropertyByRef(const wstring& key, any& value) { (*_propertyData)[key].swap(value); }
 
-inline void CProperty::SetPropertyIfNotExistByValue(const wstring& key, any value) {
+void CProperty::SetPropertyIfNotExistByValue(const wstring& key, any value) {
     if (!_propertyData->contains(key)) {
         SetPropertyByValue(key, value);
     }
 }
 
-inline void CProperty::SetPropertyIfNotExistByRef(const wstring& key, any& value) {
+void CProperty::SetPropertyIfNotExistByRef(const wstring& key, any& value) {
     if (!_propertyData->contains(key)) {
         SetPropertyByRef(key, value);
     }

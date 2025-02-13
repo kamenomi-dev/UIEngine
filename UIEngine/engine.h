@@ -20,15 +20,15 @@
 #endif
 
 namespace Engine {
-extern UINT_PTR  pGdiToken;
+extern UINT_PTR  uGdiToken;
 extern HINSTANCE hModuleInstance;
 
 UIENGINE_API extern void Initialize(HINSTANCE hInstance);
 UIENGINE_API extern void Uninitialize();
 
 // native
-void __InitializeEngine();
-void __UninitializeEngine();
+void InitializeEngineWorker();
+void UninitializeEngineWorker();
 } // namespace Engine
 
 #include "./engine.util.h"

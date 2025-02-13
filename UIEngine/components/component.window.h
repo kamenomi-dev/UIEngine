@@ -22,7 +22,7 @@ public:
 
     inline bool IsOwnerWindow() const { return GetPropertyTyped<bool>(L"isOwnerWindow"); }
     inline HWND GetWindowHandle() const {
-        if (_hSelfWindow == NULL) {
+        if (!_hSelfWindow) {
             throw runtime_error("Window hasn't created yet! ");
         }
 
@@ -41,7 +41,7 @@ public:
 
         SetWindowPos(
             _hSelfWindow,
-            NULL,
+            nullptr,
             windowRect.X,
             windowRect.Y,
             windowRect.Width,
@@ -58,7 +58,7 @@ public:
 
         SetWindowPos(
             _hSelfWindow,
-            NULL,
+            nullptr,
             windowRect.X,
             windowRect.Y,
             windowRect.Width,
@@ -87,7 +87,7 @@ public:
     Render::SwapBuffer& GetWindowSwapBuffer() { return *_renderSwapBuffer; }
 
     void        Render(Gdiplus::Graphics&);
-    inline void __Native_SetWindowSize(Size newSize) {
+    inline void _Native_SetWindowSize(Size newSize) {
         auto& windowRect    = GetPropertyTyped<Rect>(L"windowRect");
         auto& componentRect = GetPropertyTyped<Rect>(L"componentRect");
 
@@ -96,7 +96,7 @@ public:
 
         __UpdateRectangle();
     }
-    inline void __Native_SetWindowPosition(Point newPosition) {
+    inline void _Native_SetWindowPosition(Point newPosition) {
         auto& windowRect = GetPropertyTyped<Rect>(L"windowRect");
 
         windowRect.X = newPosition.X;
@@ -106,7 +106,7 @@ public:
     }
 
     inline LRESULT
-    __Native_ComponentMessageProcessor(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, bool& bIsReturn);
+    _Native_ComponentMessageProcessor(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, bool& bIsReturn);
 
 private:
     HWND                              _hSelfWindow;

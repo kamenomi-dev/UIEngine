@@ -3,32 +3,30 @@
 
 #ifndef __ENGINE_UTIL_H__
 
-namespace Engine {
-
-namespace Utils {
+namespace Engine::Utils {
 
 namespace Defines {
 
-typedef struct __structPropertyPair {
+struct PropertyPair {
     wstring propertyKey;
     any     propertyValue;
-} PropertyPair;
+};
 
 } // namespace Defines
 
-using namespace Defines;
+using namespace Defines;// XXX: 此命名空间貌似无意义
 
 class UIENGINE_API CProperty {
 public:
     CProperty(const vector<PropertyPair>&);
 
-    inline void SetPropertyByValue(const wstring&, any);
-    inline void SetPropertyByRef(const wstring&, any&);
+    void SetPropertyByValue(const wstring&, any);
+    void SetPropertyByRef(const wstring&, any&);
 
-    inline void SetPropertyIfNotExistByValue(const wstring&, any);
-    inline void SetPropertyIfNotExistByRef(const wstring&, any&);
+    void SetPropertyIfNotExistByValue(const wstring&, any);
+    void SetPropertyIfNotExistByRef(const wstring&, any&);
 
-    inline any& GetProperty(const wstring& key) {
+    any& GetProperty(const wstring& key) {
         const auto it = _propertyData->find(key);
         if (it == _propertyData->end()) {
             DebugBreak();
@@ -36,7 +34,7 @@ public:
         }
         return it->second;
     }
-    inline const any& GetProperty(const wstring& key) const {
+    const any& GetProperty(const wstring& key) const {
         const auto it = _propertyData->find(key);
         if (it == _propertyData->end()) {
             DebugBreak();
@@ -45,8 +43,8 @@ public:
         return it->second;
     }
 
-    inline auto& GetPropertyData() { return *_propertyData; }
-    inline auto& GetPropertyData() const { return *_propertyData; }
+    auto& GetPropertyData() { return *_propertyData; }
+    auto& GetPropertyData() const { return *_propertyData; }
 
     template <class T>
     auto& GetPropertyTyped(const wstring& key) {
@@ -61,7 +59,6 @@ private:
     unique_ptr<unordered_map<wstring, any>> _propertyData;
 };
 
-} // namespace Utils
-} // namespace Engine
+} // namespace Engine::Utils
 
 #endif // !__ENGINE_UTIL_H__

@@ -66,8 +66,8 @@ public:
     };
 
     virtual void    Render(Gdiplus::Graphics&);
-    virtual LRESULT __Native_ComponentMessageProcessor(UINT uMsg, WPARAM wParam, LPARAM lParam, bool& bIsReturn);
-    virtual void    __Native_TransformMessageProcessor(UINT uMsg, WPARAM wParam, LPARAM lParam);
+    virtual LRESULT _Native_ComponentMessageProcessor(UINT uMsg, WPARAM wParam, LPARAM lParam, bool& bIsReturn);
+    virtual void    _Native_TransformMessageProcessor(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 private:
     CBase*         _pParentComponent{nullptr};
