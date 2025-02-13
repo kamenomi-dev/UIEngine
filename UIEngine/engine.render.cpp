@@ -42,7 +42,7 @@ SwapBuffer::SwapBuffer(HWND hWindow)
 };
 
 SwapBuffer::~SwapBuffer() {
-    __DestroyOldBitmap();
+    _DestroyOldBitmap();
     DeleteDC(_hSwapDC);
     ReleaseDC(_hTargetWnd, _hTargetDC);
 }
@@ -61,14 +61,14 @@ void SwapBuffer::RefreshSize() {
     RECT rcWnd{};
     GetWindowRect(_hTargetWnd, &rcWnd);
 
-    __DestroyOldBitmap();
+    _DestroyOldBitmap();
     _hTargetSize.cx  = rcWnd.right - rcWnd.left - 1;
     _hTargetSize.cy  = rcWnd.bottom - rcWnd.top - 1;
     _hSwapBitmap     = CreateCompatibleBitmap(_hTargetDC, _hTargetSize.cx, _hTargetSize.cy);
     _hSwapLastBitmap = SelectBitmap(_hSwapDC, _hSwapBitmap);
 }
 
-void SwapBuffer::__DestroyOldBitmap() {
+void SwapBuffer::_DestroyOldBitmap() {
     if (_hSwapLastBitmap != NULL) {
         SelectBitmap(_hSwapDC, _hSwapLastBitmap);
     }

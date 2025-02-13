@@ -24,39 +24,39 @@ public:
     );
 
     static LRESULT WindowsMessageProcessor(HWND, UINT, WPARAM, LPARAM);
-    inline int     StartMessageLoop() {
+    int     StartMessageLoop() {
         MSG msgStruct{};
 
-        while (GetMessage(&msgStruct, nullptr, 0, 0)) {
+        while (GetMessageW(&msgStruct, nullptr, 0, 0)) {
             TranslateMessage(&msgStruct);
-            DispatchMessage(&msgStruct);
+            DispatchMessageW(&msgStruct);
         }
 
         return (int)msgStruct.wParam; // Todo, does it will lost?
     };
 
 private:
-    HINSTANCE                                _hProcessInstance{NULL};
+    HINSTANCE                                _hProcessInstance{};
     unordered_map<HWND, Component::CWindow*> _windowMap{};
     unordered_map<HWND, Component::CWindow*> _mainWindowMap{};
 
-    inline void __InsertWindowMap(HWND, Component::CWindow*);
+    void _InsertWindowMap(HWND, Component::CWindow*);
 
 
 public:
-    inline static auto& Initialize(HINSTANCE hInstance) {
-        if (__hInstance) {
+    static auto& Initialize(HINSTANCE hInstance) {
+        if (s_Instance) {
             throw runtime_error("Error! UIManager has initialized already! ");
         }
 
-        return __hInstance = unique_ptr<UIManager>(new UIManager(hInstance));
+        return s_Instance = unique_ptr<UIManager>(new UIManager(hInstance));
     };
-    inline static auto& Get() {
-        if (!__hInstance) {
+    static auto& Get() {
+        if (!s_Instance) {
             throw runtime_error("Error! UIManager hasn't initialized yet! ");
         }
 
-        return *__hInstance;
+        return *s_Instance;
     };
 
     ~UIManager() { Engine::Uninitialize(); };
@@ -64,11 +64,11 @@ public:
     UIManager& operator=(const UIManager&) = delete;
 
 private:
-    static unique_ptr<UIManager> __hInstance;
+    static unique_ptr<UIManager> s_Instance;
 
     friend class unique_ptr<UIManager>;
     UIManager(HINSTANCE hInstance) {
-        if (__hInstance) {
+        if (s_Instance) {
             throw runtime_error("Error! UIManager has initialized already! ");
         }
 

@@ -26,26 +26,23 @@ using namespace Engine;
 using namespace Logic;
 using namespace Component;
 
-unique_ptr<UIManager> UIManager::__hInstance{};
+unique_ptr<UIManager> UIManager::s_Instance{};
 
 // UIManager Window Creation
 
 CWindow* UIManager::CreateCentralWindow(wstring titleText, wstring className, Size windowSize, CWindow* parentWindow) {
-    DEVMODEW devMode{};
-    devMode.dmSize = sizeof DEVMODEW;
-
-    EnumDisplaySettingsW(NULL, ENUM_CURRENT_SETTINGS, &devMode);
-
-    const auto screenWidth  = devMode.dmPelsWidth | 1920;  // default?
-    const auto screenHeight = devMode.dmPelsHeight | 1080; // default?
+    /*DEVMODEW devMode{.dmSize = sizeof DEVMODEW};
+    EnumDisplaySettingsW(NULL, ENUM_CURRENT_SETTINGS, &devMode);*/
+    // HACK: 1.DPI感知；2.换用完善的居中判定
+    const auto screenWidth  = GetSystemMetrics(SM_CXSCREEN);
+    const auto screenHeight = GetSystemMetrics(SM_CYSCREEN);
 
     Rect windowRect = {
-        (int)std::floor((screenWidth - windowSize.Width) / 2),
-        (int)std::floor((screenHeight - windowSize.Height) / 2),
+        ((int)screenWidth - windowSize.Width) / 2,
+        ((int)screenHeight - windowSize.Height) / 2,
         windowSize.Width,
         windowSize.Height
     };
-
 
     return CreateNormalWindow(titleText, className, windowRect, parentWindow);
 }
@@ -65,11 +62,11 @@ CWindow* UIManager::CreateNormalWindow(wstring titleText, wstring className, Rec
         newWindow->SetPropertyIfNotExistByValue(L"isOwnerWindow", new bool(true));
     }
 
-    __InsertWindowMap(newWindow->GetWindowHandle(), newWindow);
+    _InsertWindowMap(newWindow->GetWindowHandle(), newWindow);
     return newWindow;
 }
 
-void UIManager::__InsertWindowMap(HWND hWnd, Component::CWindow* pWindow) {
+void UIManager::_InsertWindowMap(HWND hWnd, Component::CWindow* pWindow) {
     CHECK_RESULT_BOOL(pWindow);
 
     const auto selfWindowHandle = pWindow->GetWindowHandle();
@@ -83,7 +80,7 @@ void UIManager::__InsertWindowMap(HWND hWnd, Component::CWindow* pWindow) {
 
 // UIManager Message Processor
 
-inline void __HandleMouseMove(HWND hCurrentWindow, LPARAM lParam) {
+static void OnMouseMove(HWND hCurrentWindow, LPARAM lParam) {
     static unordered_map<HWND, CBase*> lastComponentMap{};
 
     auto& currentWindow  = *UIManager::Get().GetWindowMap()[hCurrentWindow];
@@ -100,7 +97,7 @@ inline void __HandleMouseMove(HWND hCurrentWindow, LPARAM lParam) {
         const auto posComponent = pLastComponent->GetComponentPosition();
         const auto ptMouse      = ptCurrMouse - posComponent;
 
-        pLastComponent->__Native_TransformMessageProcessor(CM_MOUSE_LEAVE, NULL, (LPARAM)&ptMouse);
+        pLastComponent->_Native_TransformMessageProcessor(CM_MOUSE_LEAVE, NULL, (LPARAM)&ptMouse);
     }
 
     if (pNextComponent) {
@@ -109,7 +106,7 @@ inline void __HandleMouseMove(HWND hCurrentWindow, LPARAM lParam) {
         const auto posComponent = pNextComponent->GetComponentPosition();
         const auto ptMouse      = ptCurrMouse - posComponent;
 
-        pNextComponent->__Native_TransformMessageProcessor(CM_MOUSE_HOVER, NULL, (LPARAM)&ptMouse);
+        pNextComponent->_Native_TransformMessageProcessor(CM_MOUSE_HOVER, NULL, (LPARAM)&ptMouse);
     }
 }
 
@@ -120,7 +117,7 @@ LRESULT UIManager::WindowsMessageProcessor(HWND hWnd, UINT uMsg, WPARAM wParam, 
     auto         bNoop         = false;
 
     if (uMsg == WM_MOUSEMOVE) {
-        __HandleMouseMove(hWnd, lParam);
+        OnMouseMove(hWnd, lParam);
     }
 
     if (uMsg == WM_CLOSE) {
@@ -144,20 +141,20 @@ LRESULT UIManager::WindowsMessageProcessor(HWND hWnd, UINT uMsg, WPARAM wParam, 
     }
 
     if (uMsg == WM_SIZE) {
-        currentWindow.__Native_SetWindowSize({GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)});
+        currentWindow._Native_SetWindowSize({GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)});
 
         return NULL;
     }
 
     if (uMsg == WM_MOVE) {
-        currentWindow.__Native_SetWindowPosition({GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)});
+        currentWindow._Native_SetWindowPosition({GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)});
 
         return NULL;
     }
 
     // Todo, how?
     if (uMsg == WM_PAINT) {
-        currentWindow.__Native_ComponentMessageProcessor(hWnd, uMsg, wParam, lParam, bNoop);
+        currentWindow._Native_ComponentMessageProcessor(hWnd, uMsg, wParam, lParam, bNoop);
         return NULL;
     }
 

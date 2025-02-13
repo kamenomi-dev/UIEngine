@@ -16,18 +16,18 @@ void CBase::Render(Gdiplus::Graphics& graphics) {
     graphics.Clear(map[this]);
 }
 
-LRESULT CBase::__Native_ComponentMessageProcessor(UINT uMsg, WPARAM wParam, LPARAM lParam, bool& bIsReturn) {
+LRESULT CBase::_Native_ComponentMessageProcessor(UINT uMsg, WPARAM wParam, LPARAM lParam, bool& bIsReturn) {
     bIsReturn = false;
     return NULL;
 }
 
-void CBase::__Native_TransformMessageProcessor(UINT uMsg, WPARAM wParam, LPARAM lParam) {
+void CBase::_Native_TransformMessageProcessor(UINT uMsg, WPARAM wParam, LPARAM lParam) {
     if (uMsg == CM_MOUSE_HOVER) {
-        (double)cos(1);
+        (void)cos(1);// FIXME: ???
     }
 
     if (uMsg == CM_MOUSE_LEAVE) {
-        (double)cos(1);
+        (void)cos(1);
     }
 
     if (uMsg == CM_PAINT) {

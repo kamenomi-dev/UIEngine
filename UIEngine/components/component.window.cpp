@@ -80,7 +80,7 @@ HWND CWindow::__CreateWindow() {
 void CWindow::Render(Gdiplus::Graphics& grap) { CBase::Render(grap); }
 
 LRESULT
-inline CWindow::__Native_ComponentMessageProcessor(
+inline CWindow::_Native_ComponentMessageProcessor(
     HWND   hWnd,
     UINT   uMsg,
     WPARAM wParam,
@@ -106,7 +106,7 @@ inline CWindow::__Native_ComponentMessageProcessor(
                                | views::filter([](const auto& p) { return p != nullptr; });
 
         for (const auto& pComponent : coveredComponents) {
-            pComponent->__Native_TransformMessageProcessor(CM_PAINT, NULL, (LPARAM)&graphics);
+            pComponent->_Native_TransformMessageProcessor(CM_PAINT, NULL, (LPARAM)&graphics);
         }
 
         swapBuffer.Present(hTargetDC);

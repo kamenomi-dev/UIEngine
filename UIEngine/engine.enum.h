@@ -5,19 +5,11 @@
 #define __ENGINE_ENUM_H__
 
 namespace Engine {
-namespace Enum {
-namespace Component {
-typedef enum __enumComponentBaseMessage {
-    CM_FIRST,
-    CM_MOUSE_HOVER,
-    CM_MOUSE_LEAVE,
-    CM_PAINT,
-    CM_LAST
-} ComponentBaseMessageEnum;
+namespace Enum::Component {
+enum ComponentBaseMessageEnum { CM_FIRST, CM_MOUSE_HOVER, CM_MOUSE_LEAVE, CM_PAINT, CM_LAST };
 
-typedef enum __enumComponentWindowMessage { CM_WINDOW_BEGIN = CM_LAST + 1, CM_WINDOW_LAST } ComponentWindowMessageEnum;
-} // namespace Component
-}; // namespace Enum
+enum ComponentWindowMessageEnum { CM_WINDOW_BEGIN = CM_LAST + 1, CM_WINDOW_LAST };
+} // namespace Enum::Component
 
 using namespace Enum::Component;
 } // namespace Engine

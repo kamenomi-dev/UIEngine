@@ -21,42 +21,32 @@
 
 #include "engine.h"
 
-UINT_PTR  Engine::pGdiToken{NULL};
-HINSTANCE Engine::hModuleInstance{NULL};
-
-void __stdcall GdiplusDebugEvent(Gdiplus::DebugEventLevel level, CHAR* message);
+UINT_PTR  Engine::uGdiToken{};
+HINSTANCE Engine::hModuleInstance{};
 
 UIENGINE_API void Engine::Initialize(HINSTANCE hInstance) {
     hModuleInstance = hInstance;
 
-    if (pGdiToken == NULL) {
-        Engine::__InitializeEngine();
+    if (!uGdiToken) {
+        Engine::InitializeEngineWorker();
     }
 
     return;
 }
 
 UIENGINE_API void Engine::Uninitialize() {
-    __UninitializeEngine();
+    UninitializeEngineWorker();
     return;
 }
 
-void Engine::__InitializeEngine() {
-    Gdiplus::GdiplusStartupInput startupInput{};
-    startupInput.GdiplusVersion = 1;
-
-#ifdef _DEBUG
-    startupInput.DebugEventCallback = &GdiplusDebugEvent;
-#endif // DEBUG
-
-    CHECK_RESULT(Gdiplus::GdiplusStartup(&pGdiToken, &startupInput, nullptr));
+void Engine::InitializeEngineWorker() {
+    const Gdiplus::GdiplusStartupInput startupInput{};
+    CHECK_RESULT(Gdiplus::GdiplusStartup(&uGdiToken, &startupInput, nullptr));
 }
 
-void Engine::__UninitializeEngine() {
-    if (pGdiToken != NULL) {
-        Gdiplus::GdiplusShutdown(pGdiToken);
-        pGdiToken = NULL;
+void Engine::UninitializeEngineWorker() {
+    if (uGdiToken) {
+        Gdiplus::GdiplusShutdown(uGdiToken);
+        uGdiToken = 0u;
     }
 }
-
-void CALLBACK GdiplusDebugEvent(Gdiplus::DebugEventLevel level, CHAR* message) { OutputDebugStringA(message); }
