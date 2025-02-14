@@ -53,7 +53,7 @@ static CBase* __TryHitTestFromRect(
     vector<CBase*>& resultComponents
 ) {
     const auto& targetRect  = *((Rect*)pTargetRect);
-    const auto& currentRect = currComp->GetPropertyTyped<Rect>(L"componentRect");
+    const auto& currentRect = currComp->ComponentRect;
 
     if (currentRect.IntersectsWith(targetRect)) {
 
@@ -71,7 +71,7 @@ static CBase* __TryHitTestFromPoint(
     vector<CBase*>& resultComponents
 ) {
     const auto& targetPoint = *(Point*)pTargetPoint;
-    const auto& currentRect = currComp->GetPropertyTyped<Rect>(L"componentRect");
+    const auto& currentRect = currComp->ComponentRect;
 
     if (currentRect.Contains(targetPoint)) {
 

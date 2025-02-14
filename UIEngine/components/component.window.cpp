@@ -8,8 +8,6 @@ using namespace Engine::Component;
 
 
 CWindow::CWindow(vector<Utils::PropertyPair> pairs) : CBase(pairs) {
-    SetPropertyByValue(L"componentLabel", L"UIEngine.Window"s);
-
     SetPropertyIfNotExistByValue(L"titleText", L"Window."s);
     SetPropertyIfNotExistByValue(L"classText", L"UIEngine.Window"s);
     SetPropertyIfNotExistByValue(L"windowRect", make_any<Rect>(0, 0, 800, 600));
@@ -19,7 +17,7 @@ CWindow::CWindow(vector<Utils::PropertyPair> pairs) : CBase(pairs) {
     _RegisterClass();
 
     const auto& rect = GetPropertyTyped<Rect>(L"windowRect");
-    SetComponentSize({rect.Width, rect.Height});
+    ComponentSize    = Size({rect.Width, rect.Height});
 
     const auto& pParent = GetPropertyTyped<CWindow*>(L"parentWindow");
     if (pParent == nullptr) {
@@ -38,8 +36,8 @@ void CWindow::_RegisterClass() {
     classInfo.lpszClassName = GetPropertyTyped<wstring>(L"classText").c_str();
 
     (RegisterClassExW(&classInfo));
-    const auto err = GetLastError();
-    _windowClassInfo  = classInfo;
+    const auto err   = GetLastError();
+    _windowClassInfo = classInfo;
 }
 
 HWND CWindow::_CreateWindow() {
@@ -98,9 +96,13 @@ CWindow::_Native_ComponentMessageProcessor(HWND hWnd, UINT uMsg, WPARAM wParam, 
                                | std::views::filter([](const auto& p) { return p != nullptr; });
 
         for (const auto& pComponent : coveredComponents) {
+            if (not pComponent->ComponentVisible) {
+                continue;
+            }
+
             const auto lastState = graphics.Save();
             {
-                graphics.SetClip(pComponent->GetComponentRect());
+                graphics.SetClip(pComponent->ComponentRect);
                 pComponent->_Native_TransformMessageProcessor(CM_PAINT, 0, (LPARAM)&graphics);
             }
             graphics.Restore(lastState);

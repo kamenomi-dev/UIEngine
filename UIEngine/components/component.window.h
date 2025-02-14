@@ -18,8 +18,10 @@ public:
 
 public:
     unique_ptr<Logic::CComponentTree>& GetComponentTree() { return _componentTree; };
-    wstring                            GetComponentClass() const { return L"Window"s; }
-    Point                              SetComponentPosition() const = delete; // don't do that.
+    // User musn't change the position via using this method. Or£¿
+    Point _Property_SetComponentPosition() const = delete;
+
+    virtual wstring _Property_GetComponentClass() const { return L"Component.Window"s; }
 
     bool IsOwnerWindow() const { return GetPropertyTyped<bool>(L"isOwnerWindow"); }
     HWND GetWindowHandle() const {
@@ -33,81 +35,30 @@ public:
         SetPropertyByValue(L"parentWindow", pOwner);
         SetPropertyByValue(L"isOwnerWindow", pOwner != nullptr);
     }
-    void SetWindowSize(Size newSize) {
-        auto& windowRect    = GetPropertyTyped<Rect>(L"windowRect");
-        auto& componentRect = GetPropertyTyped<Rect>(L"componentRect");
 
-        windowRect.Width = componentRect.Width = newSize.Width;
-        windowRect.Height = componentRect.Height = newSize.Height;
-
-        SetWindowPos(
-            _windowHandle,
-            nullptr,
-            windowRect.X,
-            windowRect.Y,
-            windowRect.Width,
-            windowRect.Height,
-            SWP_NOOWNERZORDER
-        );
-        _UpdateWindowSwapBuffer();
-    }
-    void SetWindowPosition(Point newPosition) {
-        auto& windowRect = GetPropertyTyped<Rect>(L"windowRect");
-
-        windowRect.X = newPosition.X;
-        windowRect.Y = newPosition.Y;
-
-        SetWindowPos(
-            _windowHandle,
-            nullptr,
-            windowRect.X,
-            windowRect.Y,
-            windowRect.Width,
-            windowRect.Height,
-            SWP_NOOWNERZORDER
-        );
-        _UpdateWindowSwapBuffer();
-    }
-    Size GetWindowSize() const {
-        auto& windowRect = GetPropertyTyped<Rect>(L"windowRect");
-        Size  size{};
-
-        windowRect.GetSize(&size);
-
-        return size;
-    }
-    Point GetWindowPosition() const {
-        auto& windowRect = GetPropertyTyped<Rect>(L"windowRect");
-        Point position{};
-
-        windowRect.GetLocation(&position);
-
-        return position;
-    }
 
     Render::SwapBuffer& GetWindowSwapBuffer() { return *_renderSwapBuffer; }
 
     void Render(Gdiplus::Graphics&);
-    void _Native_SetWindowSize(Size newSize) {
-        auto& windowRect    = GetPropertyTyped<Rect>(L"windowRect");
-        auto& componentRect = GetPropertyTyped<Rect>(L"componentRect");
-
-        windowRect.Width = componentRect.Width = newSize.Width;
-        windowRect.Height = componentRect.Height = newSize.Height;
-
-        _UpdateWindowSwapBuffer();
-    }
-    void _Native_SetWindowPosition(Point newPosition) {
-        auto& windowRect = GetPropertyTyped<Rect>(L"windowRect");
-
-        windowRect.X = newPosition.X;
-        windowRect.Y = newPosition.Y;
-
-        _UpdateWindowSwapBuffer();
-    }
 
     LRESULT
     _Native_ComponentMessageProcessor(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, bool& bIsReturn);
+
+    void _Native_SetWindowSize(Size newSize) {
+
+        ComponentSize      = newSize;
+        _windowRect.Width  = newSize.Width;
+        _windowRect.Height = newSize.Height;
+
+        _UpdateWindowSwapBuffer();
+    }
+
+    void _Native_SetWindowPosition(Point newPosition) {
+        _windowRect.X = newPosition.X;
+        _windowRect.Y = newPosition.Y;
+
+        _UpdateWindowSwapBuffer();
+    }
 
 private:
     HWND                              _windowHandle;
@@ -119,15 +70,66 @@ private:
     HWND _CreateWindow();
     void _UpdateWindowSwapBuffer() {
         static unordered_map<CWindow*, Size> lastSizeMap{};
+        auto&                                lastSize = lastSizeMap[this];
 
-        auto&       lastSize    = lastSizeMap[this];
-        const auto& currentSize = GetComponentSize();
-
-        if (not lastSize.Equals(currentSize)) {
+        if (not lastSize.Equals(ComponentSize)) {
             _renderSwapBuffer->RefreshSize();
 
-            lastSize = currentSize;
+            lastSize = ComponentSize;
         }
+    }
+
+private:
+    // Property
+
+    Rect _windowRect{};
+
+public:
+    COMPONENT_PROPERTY(_Property_GetWindowRect, _Property_SetWindowRect) Rect WindowRect;
+    COMPONENT_PROPERTY(_Property_GetWindowSize, _Property_SetWindowSize) Size WindowSize;
+    COMPONENT_PROPERTY(_Property_GetWindowPosition, _Property_SetWindowPosition) Point WindowPosition;
+
+    Rect& _Property_GetWindowRect() { return _windowRect; }
+    void  _Property_SetWindowRect(Rect newRect) {
+        WindowSize     = Size{newRect.Width, newRect.Height};
+        WindowPosition = Point{newRect.X, newRect.Y};
+    }
+
+    Size _Property_GetWindowSize() const { return {_windowRect.Width, _windowRect.Height}; }
+    void _Property_SetWindowSize(Size newSize) {
+        ComponentSize      = newSize;
+        _windowRect.Width  = newSize.Width;
+        _windowRect.Height = newSize.Height;
+
+        _UpdateWindowSwapBuffer();
+
+        SetWindowPos(
+            _windowHandle,
+            nullptr,
+            _windowRect.X,
+            _windowRect.Y,
+            _windowRect.Width,
+            _windowRect.Height,
+            SWP_NOOWNERZORDER
+        );
+    }
+
+    Point _Property_GetWindowPosition() const { return {_windowRect.X, _windowRect.Y}; }
+    void  _Property_SetWindowPosition(Point newPosition) {
+        _windowRect.X = newPosition.X;
+        _windowRect.Y = newPosition.Y;
+
+        _UpdateWindowSwapBuffer();
+
+        SetWindowPos(
+            _windowHandle,
+            nullptr,
+            _windowRect.X,
+            _windowRect.Y,
+            _windowRect.Width,
+            _windowRect.Height,
+            SWP_NOOWNERZORDER
+        );
     }
 };
 } // namespace Engine::Component

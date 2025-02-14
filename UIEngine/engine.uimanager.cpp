@@ -51,9 +51,10 @@ CWindow* UIManager::CreateNormalWindow(wstring titleText, wstring className, Rec
     auto newWindow = new CWindow({
         {L"titleText",    (titleText)     },
         {L"classText",    (className)     },
-        {L"windowRect",   Rect(windowRect)},
         {L"parentWindow", parentWindow    }
     });
+
+    newWindow->WindowRect = windowRect;
 
     // Default is main for first main.
 
@@ -93,7 +94,7 @@ static void OnMouseMove(HWND hCurrentWindow, LPARAM lParam) {
     }
 
     if (lastComponent) {
-        const auto posComponent = lastComponent->GetComponentPosition();
+        const auto posComponent = lastComponent->ComponentPosition;
         const auto ptMouse      = ptCurrMouse - posComponent;
 
         lastComponent->_Native_TransformMessageProcessor(CM_MOUSE_LEAVE, 0, (LPARAM)&ptMouse);
@@ -102,7 +103,7 @@ static void OnMouseMove(HWND hCurrentWindow, LPARAM lParam) {
     if (pNextComponent) {
         lastComponent = pNextComponent;
 
-        const auto posComponent = pNextComponent->GetComponentPosition();
+        const auto posComponent = pNextComponent->ComponentPosition;
         const auto ptMouse      = ptCurrMouse - posComponent;
 
         pNextComponent->_Native_TransformMessageProcessor(CM_MOUSE_HOVER, 0, (LPARAM)&ptMouse);

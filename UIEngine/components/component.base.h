@@ -11,17 +11,19 @@ public:
     friend class CWindow;
 
     CBase(vector<Utils::PropertyPair> pairs) : CProperty(pairs) {
-        SetPropertyIfNotExistByValue(L"visible", false);
-        SetPropertyIfNotExistByValue(L"disabled", false);
-        SetPropertyIfNotExistByValue(L"componentRect", make_any<Rect>(0, 0, 800, 600));
-        SetPropertyIfNotExistByValue(L"componentLabel", L"UIEngine.Base "s + std::to_wstring(rand() % time(0)));
+        ComponentVisible  |= false;
+        ComponentDisabled |= false;
+
+        ComponentRect = ComponentRect.IsEmptyArea() ? Rect(0, 0, 800, 600) : ComponentRect;
+        ComponentLabel =
+            ComponentLabel.empty() ? L"UIEngine.Base "s + std::to_wstring(rand() % time(0)) : ComponentLabel;
     }
 
 public:
     void SetChildComponent(CBase* pComponent) {
-        CHECK_RESULT_BOOL(pComponent->GetComponentClass() != L"Window");
+        CHECK_RESULT_BOOL(pComponent->ComponentClass != L"Window");
 
-        pComponent->__SetParentComponent(this);
+        pComponent->_SetParentComponent(this);
         _pChildComponents.push_back(pComponent);
     };
     void SetChildComponents(vector<CBase*> components) {
@@ -32,39 +34,6 @@ public:
 
     unordered_map<wstring, any>& GetComponentData() { return GetPropertyData(); }
 
-    virtual wstring GetComponentClass() const { return L"Base"s; };
-    wstring         GetComponentLabel() const { return GetPropertyTyped<wstring>(L"componentLabel"); };
-    void                   SetComponentLabel(wstring newLabel) { SetPropertyByValue(L"componentLabel", newLabel); }
-
-    void SetComponentSize(Size newSize) {
-        auto& componentRect  = GetPropertyTyped<Rect>(L"componentRect");
-        componentRect.Width  = newSize.Width;
-        componentRect.Height = newSize.Height;
-    }
-    void SetComponentPosition(Point newPosition) {
-        auto& componentRect = GetPropertyTyped<Rect>(L"componentRect");
-
-        componentRect.X = newPosition.X;
-        componentRect.Y = newPosition.Y;
-    }
-    Rect GetComponentRect() const { return GetPropertyTyped<Rect>(L"componentRect"); };
-    Size GetComponentSize() const {
-        const auto& componentRect = GetPropertyTyped<Rect>(L"componentRect");
-        Size        returnSize{};
-
-        componentRect.GetSize(&returnSize);
-
-        return returnSize;
-    }
-    Point GetComponentPosition() const {
-        const auto& componentRect = GetPropertyTyped<Rect>(L"componentRect");
-        Point       returnPosition{};
-
-        componentRect.GetLocation(&returnPosition);
-
-        return returnPosition;
-    };
-
     virtual void    Render(Gdiplus::Graphics&);
     virtual LRESULT _Native_ComponentMessageProcessor(UINT, WPARAM, LPARAM, bool&);
     virtual void    _Native_TransformMessageProcessor(UINT, WPARAM, LPARAM);
@@ -73,7 +42,72 @@ private:
     CBase*         _pParentComponent{nullptr};
     vector<CBase*> _pChildComponents{};
 
-    void __SetParentComponent(CBase* pComponent) { _pParentComponent = pComponent; }
+    void _SetParentComponent(CBase* pComponent) { _pParentComponent = pComponent; }
+
+    // Property
+
+    bool _isVisible{false};
+    bool _isDisabled{false};
+
+    wstring _componentLabel{};
+    Rect    _componentRect{};
+
+public:
+    COMPONENT_PROPERTY(_Property_IsVisible, _Property_SetVisible) bool ComponentVisible;
+    COMPONENT_PROPERTY(_Property_IsDisabled, _Property_SetDisabled) bool ComponentDisabled;
+
+    COMPONENT_PROPERTY_GETTER_ONLY(_Property_GetComponentClass) wstring ComponentClass;
+    COMPONENT_PROPERTY(_Property_GetComponentLabel, _Property_SetComponentLabel) wstring ComponentLabel;
+    COMPONENT_PROPERTY(_Property_GetComponentRect, _Property_SetComponentRect) Rect ComponentRect;
+    COMPONENT_PROPERTY(_Property_GetComponentSize, _Property_SetComponentSize) Size ComponentSize;
+    COMPONENT_PROPERTY(_Property_GetComponentPosition, _Property_SetComponentPosition) Point ComponentPosition;
+
+
+    bool _Property_IsVisible() const { return _isVisible; };
+    void _Property_SetVisible(bool newStatus) {
+        // Todo! Support dynamic render.
+        _isVisible = newStatus;
+    };
+
+    bool _Property_IsDisabled() const { return _isDisabled; };
+    void _Property_SetDisabled(bool newStatus) {
+        // Todo! Support dynamic render.
+        _isDisabled = newStatus;
+    };
+
+    virtual wstring _Property_GetComponentClass() const { return L"Component.Base"s; }
+
+    wstring _Property_GetComponentLabel() const { return _componentLabel; }
+    void    _Property_SetComponentLabel(wstring newLabel) {
+        // Todo! Support dynamic render.
+        _componentLabel = newLabel;
+    }
+
+    Rect& _Property_GetComponentRect() { return _componentRect; }
+    Rect  _Property_SetComponentRect(Rect newRect) {
+        // Todo! Support dynamic render.
+        _componentRect = newRect;
+
+        return newRect;
+    }
+
+    Size _Property_GetComponentSize() const { return Size{_componentRect.Width, _componentRect.Height}; }
+    Size _Property_SetComponentSize(Size newSize) {
+        // Todo! Support dynamic render.
+        _componentRect.Width  = newSize.Width;
+        _componentRect.Height = newSize.Height;
+
+        return newSize;
+    }
+
+    Point _Property_GetComponentPosition() const { return Point{_componentRect.X, _componentRect.Y}; }
+    Point _Property_SetComponentPosition(Point newPosition) {
+        // Todo! Support dynamic render.
+        _componentRect.X = newPosition.X;
+        _componentRect.Y = newPosition.Y;
+
+        return newPosition;
+    }
 };
 } // namespace Component
 } // namespace Engine

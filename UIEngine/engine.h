@@ -11,13 +11,17 @@
 #ifndef __ENGINE_H__
 #define __ENGINE_H__
 
-#ifdef _DEBUG
-#define CHECK_RESULT(ret) assert((ret) == Status::Ok && "Error, need to debug to find the detail.");
+#ifdef _DEBUG // !!! FIX ME
+#define CHECK_RESULT(ret)      assert((ret) == Status::Ok && "Error, need to debug to find the detail.");
 #define CHECK_RESULT_BOOL(ret) assert(!!(ret) && "Error, need to debug to find the detail.");
 #else
-#define CHECK_RESULT(ret) ret;
+#define CHECK_RESULT(ret)      ret;
 #define CHECK_RESULT_BOOL(ret) ret;
 #endif
+
+#define COMPONENT_PROPERTY(Getter, Setter)     __declspec(property(get = Getter, put = Setter))
+#define COMPONENT_PROPERTY_GETTER_ONLY(Getter) __declspec(property(get = Getter))
+#define COMPONENT_PROPERTY_SETTER_ONLY(Setter) __declspec(property(put = Setter))
 
 namespace Engine {
 extern UINT_PTR  uGdiToken;
@@ -31,12 +35,14 @@ void InitializeEngineWorker();
 void UninitializeEngineWorker();
 } // namespace Engine
 
-#include "./engine.util.h"
 #include "./engine.enum.h"
-#include "./engine.render.h"
 #include "./engine.logic.h"
+#include "./engine.render.h"
+#include "./engine.util.h"
+
 #include "./components/component.base.h"
 #include "./components/component.window.h"
+
 #include "./engine.uimanager.h"
 
 #endif //  __ENGINE_H__
