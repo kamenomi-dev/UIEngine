@@ -10,18 +10,28 @@ namespace Engine::Render {
 
 class UIENGINE_API SwapBuffer final {
 private:
-    HWND    _hTargetWnd{};
-    SIZE    _hTargetSize{};
-    HDC     _hTargetDC{};
-    HDC     _hSwapDC{};
-    HBITMAP _hSwapBitmap{};
-    HBITMAP _hSwapLastBitmap{};
+    HWND    _targetWindow{};
+    HDC     _targetWindowDC{};
+    SIZE    _targetWindowSize{};
+    HDC     _swapDC{};
+    HBITMAP _swapBitmap{};
+    HBITMAP _swapLastBitmap{};
 
     void _DestroyOldBitmap();
 
 public:
-    SwapBuffer(HWND hWindow);
-    ~SwapBuffer();
+    SwapBuffer(HWND window)
+    : _swapDC{CreateCompatibleDC(nullptr)},
+      _targetWindow{window},
+      _targetWindowDC{GetDC(window)} {
+        RefreshSize();
+    };
+    ~SwapBuffer() {
+        _DestroyOldBitmap();
+
+        DeleteDC(_swapDC);
+        ReleaseDC(_targetWindow, _targetWindowDC);
+    };
 
     HDC GetRenderableDC() const;
 

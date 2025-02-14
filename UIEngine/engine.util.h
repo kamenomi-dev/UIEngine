@@ -5,16 +5,10 @@
 
 namespace Engine::Utils {
 
-namespace Defines {
-
 struct PropertyPair {
     wstring propertyKey;
     any     propertyValue;
 };
-
-} // namespace Defines
-
-using namespace Defines;// XXX: 此命名空间貌似无意义
 
 class UIENGINE_API CProperty {
 public:

@@ -6,7 +6,7 @@
 
 namespace Engine {
 namespace Enum::Component {
-enum ComponentBaseMessageEnum { CM_FIRST, CM_MOUSE_HOVER, CM_MOUSE_LEAVE, CM_PAINT, CM_LAST };
+enum ComponentBaseMessageEnum { CM_FIRST , CM_DESTROY, CM_MOUSE_HOVER, CM_MOUSE_LEAVE, CM_PAINT, CM_LAST };
 
 enum ComponentWindowMessageEnum { CM_WINDOW_BEGIN = CM_LAST + 1, CM_WINDOW_LAST };
 } // namespace Enum::Component

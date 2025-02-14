@@ -4,29 +4,30 @@
 #ifndef __COMPONENT_WINDOW_H__
 #define __COMPONENT_WINDOW_H__
 
-namespace Engine {
-namespace Component {
+namespace Engine::Component {
 
 class UIENGINE_API CWindow : public CBase {
 public:
     CWindow(vector<Utils::PropertyPair>);
     ~CWindow() {
-        __DeleteWindow();
-        __UnregisterClass();
+        DestroyWindow(_windowHandle);
+        RegisterClassExW(&_windowClassInfo);
+
+        _windowClassInfo = {};
     }
 
 public:
     unique_ptr<Logic::CComponentTree>& GetComponentTree() { return _componentTree; };
-    inline wstring                     GetComponentClass() const { return L"Window"s; }
+    wstring                            GetComponentClass() const { return L"Window"s; }
     Point                              SetComponentPosition() const = delete; // don't do that.
 
-    inline bool IsOwnerWindow() const { return GetPropertyTyped<bool>(L"isOwnerWindow"); }
-    inline HWND GetWindowHandle() const {
-        if (!_hSelfWindow) {
+    bool IsOwnerWindow() const { return GetPropertyTyped<bool>(L"isOwnerWindow"); }
+    HWND GetWindowHandle() const {
+        if (!_windowHandle) {
             throw runtime_error("Window hasn't created yet! ");
         }
 
-        return _hSelfWindow;
+        return _windowHandle;
     }
     void SetWindowOwner(CWindow* pOwner) {
         SetPropertyByValue(L"parentWindow", pOwner);
@@ -40,7 +41,7 @@ public:
         windowRect.Height = componentRect.Height = newSize.Height;
 
         SetWindowPos(
-            _hSelfWindow,
+            _windowHandle,
             nullptr,
             windowRect.X,
             windowRect.Y,
@@ -48,7 +49,7 @@ public:
             windowRect.Height,
             SWP_NOOWNERZORDER
         );
-        __UpdateRectangle();
+        _UpdateWindowSwapBuffer();
     }
     void SetWindowPosition(Point newPosition) {
         auto& windowRect = GetPropertyTyped<Rect>(L"windowRect");
@@ -57,7 +58,7 @@ public:
         windowRect.Y = newPosition.Y;
 
         SetWindowPos(
-            _hSelfWindow,
+            _windowHandle,
             nullptr,
             windowRect.X,
             windowRect.Y,
@@ -65,9 +66,9 @@ public:
             windowRect.Height,
             SWP_NOOWNERZORDER
         );
-        __UpdateRectangle();
+        _UpdateWindowSwapBuffer();
     }
-    inline Size GetWindowSize() const {
+    Size GetWindowSize() const {
         auto& windowRect = GetPropertyTyped<Rect>(L"windowRect");
         Size  size{};
 
@@ -75,7 +76,7 @@ public:
 
         return size;
     }
-    inline Point GetWindowPosition() const {
+    Point GetWindowPosition() const {
         auto& windowRect = GetPropertyTyped<Rect>(L"windowRect");
         Point position{};
 
@@ -86,53 +87,49 @@ public:
 
     Render::SwapBuffer& GetWindowSwapBuffer() { return *_renderSwapBuffer; }
 
-    void        Render(Gdiplus::Graphics&);
-    inline void _Native_SetWindowSize(Size newSize) {
+    void Render(Gdiplus::Graphics&);
+    void _Native_SetWindowSize(Size newSize) {
         auto& windowRect    = GetPropertyTyped<Rect>(L"windowRect");
         auto& componentRect = GetPropertyTyped<Rect>(L"componentRect");
 
         windowRect.Width = componentRect.Width = newSize.Width;
         windowRect.Height = componentRect.Height = newSize.Height;
 
-        __UpdateRectangle();
+        _UpdateWindowSwapBuffer();
     }
-    inline void _Native_SetWindowPosition(Point newPosition) {
+    void _Native_SetWindowPosition(Point newPosition) {
         auto& windowRect = GetPropertyTyped<Rect>(L"windowRect");
 
         windowRect.X = newPosition.X;
         windowRect.Y = newPosition.Y;
 
-        __UpdateRectangle();
+        _UpdateWindowSwapBuffer();
     }
 
-    inline LRESULT
+    LRESULT
     _Native_ComponentMessageProcessor(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, bool& bIsReturn);
 
 private:
-    HWND                              _hSelfWindow;
-    WNDCLASSEXW                       _wndClassInfo;
+    HWND                              _windowHandle;
+    WNDCLASSEXW                       _windowClassInfo;
     unique_ptr<Logic::CComponentTree> _componentTree;
     unique_ptr<Render::SwapBuffer>    _renderSwapBuffer;
 
-    inline void __RegisterClass();
-    inline void __UnregisterClass() { (RegisterClassExW(&_wndClassInfo)); }
-    inline HWND __CreateWindow();
-    inline void __DeleteWindow() { DestroyWindow(_hSelfWindow); }
-    inline void __UpdateRectangle() {
-        static Rect lastRect{};
-        const auto& currRect = GetPropertyTyped<Rect>(L"componentRect");
+    void _RegisterClass();
+    HWND _CreateWindow();
+    void _UpdateWindowSwapBuffer() {
+        static unordered_map<CWindow*, Size> lastSizeMap{};
 
-        if (not lastRect.Equals(currRect)) {
+        auto&       lastSize    = lastSizeMap[this];
+        const auto& currentSize = GetComponentSize();
 
-            if (lastRect.Width != currRect.Width || lastRect.Height != currRect.Height) {
-                _renderSwapBuffer->RefreshSize();
-            }
+        if (not lastSize.Equals(currentSize)) {
+            _renderSwapBuffer->RefreshSize();
 
-            lastRect = currRect;
+            lastSize = currentSize;
         }
     }
 };
-} // namespace Component
-} // namespace Engine
+} // namespace Engine::Component
 
 #endif // !__COMPONENT_WINDOW_H__

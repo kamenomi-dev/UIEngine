@@ -26,7 +26,7 @@ using namespace Engine::Component;
 
 // Compenont Tree - -  Hittest Implement
 
-inline static void __TryHitTestConditionNext(
+static void __TryHitTestConditionNext(
     LPVOID                 lParam,
     TTryHittestCondition&& conditionFunc,
     vector<CBase*>&        components,
@@ -46,7 +46,7 @@ inline static void __TryHitTestConditionNext(
     }
 };
 
-inline static CBase* __TryHitTestFromRect(
+static CBase* __TryHitTestFromRect(
     LPVOID          pTargetRect,
     CBase*          currComp,
     vector<CBase*>& currCompChildren,
@@ -64,7 +64,7 @@ inline static CBase* __TryHitTestFromRect(
     return nullptr;
 }
 
-inline static CBase* __TryHitTestFromPoint(
+static CBase* __TryHitTestFromPoint(
     LPVOID          pTargetPoint,
     CBase*          currComp,
     vector<CBase*>& currCompChildren,

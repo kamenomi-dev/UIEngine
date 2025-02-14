@@ -28,46 +28,33 @@ using namespace Engine::Render;
  *  SwapBuffer 
  */
 
-SwapBuffer::SwapBuffer(HWND hWindow) : _hTargetWnd{hWindow} {
-    _hTargetDC = GetDC(hWindow);
-    _hSwapDC   = CreateCompatibleDC(nullptr);
-
-    RefreshSize();
-};
-
-SwapBuffer::~SwapBuffer() {
-    _DestroyOldBitmap();
-    DeleteDC(_hSwapDC);
-    ReleaseDC(_hTargetWnd, _hTargetDC);
-}
-
-HDC SwapBuffer::GetRenderableDC() const { return _hSwapDC; }
+HDC SwapBuffer::GetRenderableDC() const { return _swapDC; }
 
 bool SwapBuffer::Present() {
-    return BitBlt(_hTargetDC, 0, 0, _hTargetSize.cx, _hTargetSize.cy, _hSwapDC, 0, 0, SRCCOPY);
+    return BitBlt(_targetWindowDC, 0, 0, _targetWindowSize.cx, _targetWindowSize.cy, _swapDC, 0, 0, SRCCOPY);
 }
 
 bool SwapBuffer::Present(HDC hTargetDC) {
-    return BitBlt(hTargetDC, 0, 0, _hTargetSize.cx, _hTargetSize.cy, _hSwapDC, 0, 0, SRCCOPY);
+    return BitBlt(hTargetDC, 0, 0, _targetWindowSize.cx, _targetWindowSize.cy, _swapDC, 0, 0, SRCCOPY);
 }
 
 void SwapBuffer::RefreshSize() {
     RECT rcWnd{};
-    GetWindowRect(_hTargetWnd, &rcWnd);
+    GetWindowRect(_targetWindow, &rcWnd);
 
     _DestroyOldBitmap();
-    _hTargetSize.cx  = rcWnd.right - rcWnd.left - 1;
-    _hTargetSize.cy  = rcWnd.bottom - rcWnd.top - 1;
-    _hSwapBitmap     = CreateCompatibleBitmap(_hTargetDC, _hTargetSize.cx, _hTargetSize.cy);
-    _hSwapLastBitmap = SelectBitmap(_hSwapDC, _hSwapBitmap);
+    _targetWindowSize.cx  = rcWnd.right - rcWnd.left - 1;
+    _targetWindowSize.cy  = rcWnd.bottom - rcWnd.top - 1;
+    _swapBitmap     = CreateCompatibleBitmap(_targetWindowDC, _targetWindowSize.cx, _targetWindowSize.cy);
+    _swapLastBitmap = SelectBitmap(_swapDC, _swapBitmap);
 }
 
 void SwapBuffer::_DestroyOldBitmap() {
-    if (_hSwapLastBitmap) {
-        SelectBitmap(_hSwapDC, _hSwapLastBitmap);
+    if (_swapLastBitmap) {
+        SelectBitmap(_swapDC, _swapLastBitmap);
     }
-    DeleteBitmap(_hSwapBitmap);
+    DeleteBitmap(_swapBitmap);
 
-    _hSwapBitmap     = nullptr;
-    _hSwapLastBitmap = nullptr;
+    _swapBitmap     = nullptr;
+    _swapLastBitmap = nullptr;
 }

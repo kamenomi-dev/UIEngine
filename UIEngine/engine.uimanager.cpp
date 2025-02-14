@@ -26,7 +26,7 @@ using namespace Engine;
 using namespace Logic;
 using namespace Component;
 
-unique_ptr<UIManager> UIManager::s_Instance{};
+unique_ptr<UIManager> UIManager::_selfInstance{};
 
 // UIManager Window Creation
 
@@ -66,16 +66,15 @@ CWindow* UIManager::CreateNormalWindow(wstring titleText, wstring className, Rec
     return newWindow;
 }
 
-void UIManager::_InsertWindowMap(HWND hWnd, Component::CWindow* pWindow) {
-    CHECK_RESULT_BOOL(pWindow);
+void UIManager::_InsertWindowMap(HWND hWnd, Component::CWindow* ptrWindow) {
+    CHECK_RESULT_BOOL(ptrWindow);
 
-    const auto selfWindowHandle = pWindow->GetWindowHandle();
-    auto       z                = pWindow->GetPropertyTyped<bool>(L"isOwnerWindow");
-    if (pWindow->GetPropertyTyped<bool>(L"isOwnerWindow")) {
-        _mainWindowMap[selfWindowHandle] = pWindow;
+    const auto selfWindowHandle = ptrWindow->GetWindowHandle();
+    if (ptrWindow->GetPropertyTyped<bool>(L"isOwnerWindow")) {
+        _mainWindowMap[selfWindowHandle] = ptrWindow;
     }
 
-    _windowMap[selfWindowHandle] = pWindow;
+    _windowMap[selfWindowHandle] = ptrWindow;
 }
 
 // UIManager Message Processor
@@ -83,25 +82,25 @@ void UIManager::_InsertWindowMap(HWND hWnd, Component::CWindow* pWindow) {
 static void OnMouseMove(HWND hCurrentWindow, LPARAM lParam) {
     static unordered_map<HWND, CBase*> lastComponentMap{};
 
-    auto& currentWindow  = *UIManager::Get().GetWindowMap()[hCurrentWindow];
-    auto& pLastComponent = lastComponentMap[hCurrentWindow];
+    auto& currentWindow = UIManager::Get().GetWindowMap()[hCurrentWindow];
+    auto& lastComponent = lastComponentMap[hCurrentWindow];
 
     const Point ptCurrMouse    = {GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)};
-    const auto  pNextComponent = currentWindow.GetComponentTree()->TryHitTest(ptCurrMouse)[0];
+    const auto  pNextComponent = currentWindow->GetComponentTree()->TryHitTest(ptCurrMouse)[0];
 
-    if (pLastComponent == pNextComponent) {
+    if (lastComponent == pNextComponent) {
         return;
     }
 
-    if (pLastComponent) {
-        const auto posComponent = pLastComponent->GetComponentPosition();
+    if (lastComponent) {
+        const auto posComponent = lastComponent->GetComponentPosition();
         const auto ptMouse      = ptCurrMouse - posComponent;
 
-        pLastComponent->_Native_TransformMessageProcessor(CM_MOUSE_LEAVE, 0, (LPARAM)&ptMouse);
+        lastComponent->_Native_TransformMessageProcessor(CM_MOUSE_LEAVE, 0, (LPARAM)&ptMouse);
     }
 
     if (pNextComponent) {
-        pLastComponent = pNextComponent;
+        lastComponent = pNextComponent;
 
         const auto posComponent = pNextComponent->GetComponentPosition();
         const auto ptMouse      = ptCurrMouse - posComponent;
@@ -112,8 +111,8 @@ static void OnMouseMove(HWND hCurrentWindow, LPARAM lParam) {
 
 LRESULT UIManager::WindowsMessageProcessor(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
-    static auto& pUIManager    = UIManager::Get();
-    auto&        currentWindow = *pUIManager._windowMap[hWnd];
+    static auto& UIManager     = UIManager::Get();
+    auto&        currentWindow = *UIManager._windowMap[hWnd];
     auto         bNoop         = false;
 
     if (uMsg == WM_MOUSEMOVE) {
@@ -121,15 +120,29 @@ LRESULT UIManager::WindowsMessageProcessor(HWND hWnd, UINT uMsg, WPARAM wParam, 
     }
 
     if (uMsg == WM_CLOSE) {
-        auto& mainWindowMap = (pUIManager._mainWindowMap);
 
-        if (mainWindowMap.find(hWnd) != mainWindowMap.end()) {
+        auto& mainWindowMap = (UIManager._mainWindowMap);
+
+        auto windowResult = mainWindowMap.find(hWnd);
+        if (windowResult != mainWindowMap.end()) {
+
+            auto& windowMap  = UIManager.GetWindowMap();
+            auto& mainWindow = windowResult->second;
+
+            mainWindow->_Native_ComponentMessageProcessor(hWnd, uMsg, NULL, NULL, bNoop);
+
+            delete mainWindow;
+            mainWindow = nullptr;
+            windowMap.erase(hWnd);
             mainWindowMap.erase(hWnd);
         }
 
         if (mainWindowMap.size() == 0) {
-            for (auto& window : (pUIManager._windowMap)) {
+            // UIManager.GetWindowMap().clear();
+
+            for (auto& window : (UIManager._windowMap)) {
                 if (window.second != nullptr) {
+                    window.second->_Native_ComponentMessageProcessor(hWnd, uMsg, NULL, NULL, bNoop);
                     delete window.second;
                 }
             }
@@ -155,6 +168,7 @@ LRESULT UIManager::WindowsMessageProcessor(HWND hWnd, UINT uMsg, WPARAM wParam, 
     // Todo, how?
     if (uMsg == WM_PAINT) {
         currentWindow._Native_ComponentMessageProcessor(hWnd, uMsg, wParam, lParam, bNoop);
+
         return 0;
     }
 

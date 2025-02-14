@@ -18,22 +18,22 @@ public:
     }
 
 public:
-    inline void SetChildComponent(CBase* pComponent) {
+    void SetChildComponent(CBase* pComponent) {
         CHECK_RESULT_BOOL(pComponent->GetComponentClass() != L"Window");
 
         pComponent->__SetParentComponent(this);
         _pChildComponents.push_back(pComponent);
     };
-    inline void SetChildComponents(vector<CBase*> components) {
+    void SetChildComponents(vector<CBase*> components) {
         _pChildComponents.insert(_pChildComponents.end(), components.begin(), components.end());
     };
-    inline vector<CBase*>& GetChildCompnents() { return _pChildComponents; };
-    inline CBase*          GetParentComponent() { return _pParentComponent; };
+    vector<CBase*>& GetChildCompnents() { return _pChildComponents; };
+    CBase*          GetParentComponent() { return _pParentComponent; };
 
-    inline unordered_map<wstring, any>& GetComponentData() { return GetPropertyData(); }
+    unordered_map<wstring, any>& GetComponentData() { return GetPropertyData(); }
 
-    inline virtual wstring GetComponentClass() const { return L"Base"s; };
-    inline wstring         GetComponentLabel() const { return GetPropertyTyped<wstring>(L"componentLabel"); };
+    virtual wstring GetComponentClass() const { return L"Base"s; };
+    wstring         GetComponentLabel() const { return GetPropertyTyped<wstring>(L"componentLabel"); };
     void                   SetComponentLabel(wstring newLabel) { SetPropertyByValue(L"componentLabel", newLabel); }
 
     void SetComponentSize(Size newSize) {
@@ -47,8 +47,8 @@ public:
         componentRect.X = newPosition.X;
         componentRect.Y = newPosition.Y;
     }
-    inline Rect GetComponentRect() const { return GetPropertyTyped<Rect>(L"componentRect"); };
-    inline Size GetComponentSize() const {
+    Rect GetComponentRect() const { return GetPropertyTyped<Rect>(L"componentRect"); };
+    Size GetComponentSize() const {
         const auto& componentRect = GetPropertyTyped<Rect>(L"componentRect");
         Size        returnSize{};
 
@@ -56,7 +56,7 @@ public:
 
         return returnSize;
     }
-    inline Point GetComponentPosition() const {
+    Point GetComponentPosition() const {
         const auto& componentRect = GetPropertyTyped<Rect>(L"componentRect");
         Point       returnPosition{};
 
@@ -66,14 +66,14 @@ public:
     };
 
     virtual void    Render(Gdiplus::Graphics&);
-    virtual LRESULT _Native_ComponentMessageProcessor(UINT uMsg, WPARAM wParam, LPARAM lParam, bool& bIsReturn);
-    virtual void    _Native_TransformMessageProcessor(UINT uMsg, WPARAM wParam, LPARAM lParam);
+    virtual LRESULT _Native_ComponentMessageProcessor(UINT, WPARAM, LPARAM, bool&);
+    virtual void    _Native_TransformMessageProcessor(UINT, WPARAM, LPARAM);
 
 private:
     CBase*         _pParentComponent{nullptr};
     vector<CBase*> _pChildComponents{};
 
-    inline void __SetParentComponent(CBase* pComponent) { _pParentComponent = pComponent; }
+    void __SetParentComponent(CBase* pComponent) { _pParentComponent = pComponent; }
 };
 } // namespace Component
 } // namespace Engine

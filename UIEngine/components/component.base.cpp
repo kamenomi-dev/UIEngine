@@ -16,14 +16,31 @@ void CBase::Render(Gdiplus::Graphics& graphics) {
     graphics.Clear(map[this]);
 }
 
-LRESULT CBase::_Native_ComponentMessageProcessor(UINT uMsg, WPARAM wParam, LPARAM lParam, bool& bIsReturn) {
-    bIsReturn = false;
+LRESULT CBase::_Native_ComponentMessageProcessor(UINT uMsg, WPARAM wParam, LPARAM lParam, bool& isReturn) {
+
+    if (uMsg == WM_CLOSE) {
+        _Native_TransformMessageProcessor(CM_DESTROY, NULL, NULL);
+
+        for (auto& child : GetChildCompnents()) {
+            child->_Native_ComponentMessageProcessor(WM_CLOSE, NULL, NULL, isReturn);
+
+            delete child;
+            child = nullptr;
+        }
+
+        GetChildCompnents().clear();
+    }
+
     return 0;
 }
 
 void CBase::_Native_TransformMessageProcessor(UINT uMsg, WPARAM wParam, LPARAM lParam) {
+    if (uMsg == CM_DESTROY) {
+        (void)cos(1);
+    }
+
     if (uMsg == CM_MOUSE_HOVER) {
-        (void)cos(1);// FIXME: ???
+        (void)cos(1); // FIXME: ???
     }
 
     if (uMsg == CM_MOUSE_LEAVE) {
@@ -31,13 +48,6 @@ void CBase::_Native_TransformMessageProcessor(UINT uMsg, WPARAM wParam, LPARAM l
     }
 
     if (uMsg == CM_PAINT) {
-        auto& graphics = *(Gdiplus::Graphics*)lParam;
-
-        const auto lastState = graphics.Save();
-        {
-            graphics.SetClip(GetComponentRect());
-            Render(graphics);
-        }
-        graphics.Restore(lastState);
+        Render(*(Gdiplus::Graphics*)lParam);
     }
 }

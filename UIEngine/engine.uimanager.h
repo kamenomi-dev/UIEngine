@@ -7,8 +7,8 @@ namespace Engine {
 
 class UIENGINE_API UIManager final {
 public:
-    [[nodiscard]] inline HINSTANCE GetProcessInstance() const { return _hProcessInstance; };
-    [[nodiscard]] inline auto&     GetWindowMap() { return _windowMap; };
+    [[nodiscard]] HINSTANCE GetProcessInstance() const { return _processInstance; };
+    [[nodiscard]] auto&     GetWindowMap() { return _windowMap; };
 
     Component::CWindow* CreateCentralWindow(
         wstring             titleText,
@@ -36,7 +36,7 @@ public:
     };
 
 private:
-    HINSTANCE                                _hProcessInstance{};
+    HINSTANCE                                _processInstance{};
     unordered_map<HWND, Component::CWindow*> _windowMap{};
     unordered_map<HWND, Component::CWindow*> _mainWindowMap{};
 
@@ -44,19 +44,19 @@ private:
 
 
 public:
-    static auto& Initialize(HINSTANCE hInstance) {
-        if (s_Instance) {
+    static auto& Initialize(HINSTANCE instance) {
+        if (_selfInstance) {
             throw runtime_error("Error! UIManager has initialized already! ");
         }
 
-        return s_Instance = unique_ptr<UIManager>(new UIManager(hInstance));
+        return _selfInstance = unique_ptr<UIManager>(new UIManager(instance));
     };
     static auto& Get() {
-        if (!s_Instance) {
+        if (!_selfInstance) {
             throw runtime_error("Error! UIManager hasn't initialized yet! ");
         }
 
-        return *s_Instance;
+        return *_selfInstance;
     };
 
     ~UIManager() { Engine::Uninitialize(); };
@@ -64,15 +64,15 @@ public:
     UIManager& operator=(const UIManager&) = delete;
 
 private:
-    static unique_ptr<UIManager> s_Instance;
+    static unique_ptr<UIManager> _selfInstance;
 
     friend class unique_ptr<UIManager>;
     UIManager(HINSTANCE hInstance) {
-        if (s_Instance) {
+        if (_selfInstance) {
             throw runtime_error("Error! UIManager has initialized already! ");
         }
 
-        _hProcessInstance = hInstance;
+        _processInstance = hInstance;
         Engine::Initialize(hInstance);
     };
 };
