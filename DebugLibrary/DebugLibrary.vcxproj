@@ -150,6 +150,7 @@
   <ItemGroup>
     <ClInclude Include="DebugLibrary.h" />
     <ClInclude Include="framework.h" />
+    <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DebugLibrary.cpp" />
@@ -158,6 +159,12 @@
     <ProjectReference Include="..\UIEngine\UIEngine.vcxproj">
       <Project>{b8fc4b8d-cd7d-4bdd-9834-cc6d16c8ebfc}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="DebugLibrary1.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="C:\Users\Kamen\Downloads\IconGroup194.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

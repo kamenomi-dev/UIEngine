@@ -24,24 +24,22 @@
 using namespace Engine::Utils;
 
 CProperty::CProperty(const vector<PropertyPair>& pairs) {
-    _propertyData = make_unique<unordered_map<wstring, any>>();
-
     for (auto& pair : pairs) {
         SetPropertyByValue(pair.propertyKey, pair.propertyValue);
     }
 }
 
-void CProperty::SetPropertyByValue(const wstring& key, any value) { (*_propertyData)[key] = value; }
+void CProperty::SetPropertyByValue(const wstring_view& key, any value) { (*_propertyData)[key] = value; }
 
-void CProperty::SetPropertyByRef(const wstring& key, any& value) { (*_propertyData)[key].swap(value); }
+void CProperty::SetPropertyByRef(const wstring_view& key, any& value) { (*_propertyData)[key].swap(value); }
 
-void CProperty::SetPropertyIfNotExistByValue(const wstring& key, any value) {
+void CProperty::SetPropertyIfNotExistByValue(const wstring_view& key, any value) {
     if (!_propertyData->contains(key)) {
         SetPropertyByValue(key, value);
     }
 }
 
-void CProperty::SetPropertyIfNotExistByRef(const wstring& key, any& value) {
+void CProperty::SetPropertyIfNotExistByRef(const wstring_view& key, any& value) {
     if (!_propertyData->contains(key)) {
         SetPropertyByRef(key, value);
     }

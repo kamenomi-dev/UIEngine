@@ -60,6 +60,7 @@ using std::runtime_error;
 
 using std::string;
 using std::wstring;
+using std::wstring_view;
 
 using std::reverse;
 using std::unordered_map;

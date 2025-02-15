@@ -14,13 +14,13 @@ class UIENGINE_API CProperty {
 public:
     CProperty(const vector<PropertyPair>&);
 
-    void SetPropertyByValue(const wstring&, any);
-    void SetPropertyByRef(const wstring&, any&);
+    void SetPropertyByValue(const wstring_view& key, any);
+    void SetPropertyByRef(const wstring_view& key, any&);
 
-    void SetPropertyIfNotExistByValue(const wstring&, any);
-    void SetPropertyIfNotExistByRef(const wstring&, any&);
+    void SetPropertyIfNotExistByValue(const wstring_view& key, any);
+    void SetPropertyIfNotExistByRef(const wstring_view& key, any&);
 
-    any& GetProperty(const wstring& key) {
+    any& GetProperty(const wstring_view& key) {
         const auto it = _propertyData->find(key);
         if (it == _propertyData->end()) {
             DebugBreak();
@@ -28,7 +28,7 @@ public:
         }
         return it->second;
     }
-    const any& GetProperty(const wstring& key) const {
+    const any& GetProperty(const wstring_view& key) const {
         const auto it = _propertyData->find(key);
         if (it == _propertyData->end()) {
             DebugBreak();
@@ -41,16 +41,16 @@ public:
     auto& GetPropertyData() const { return *_propertyData; }
 
     template <class T>
-    auto& GetPropertyTyped(const wstring& key) {
+    auto& GetPropertyTyped(const wstring_view& key) {
         return any_cast<T&>(GetProperty(key));
     }
     template <class T>
-    auto& GetPropertyTyped(const wstring& key) const {
+    auto& GetPropertyTyped(const wstring_view& key) const {
         return any_cast<const T&>(GetProperty(key));
     }
 
 private:
-    unique_ptr<unordered_map<wstring, any>> _propertyData;
+    unique_ptr<unordered_map<wstring_view, any>> _propertyData{new unordered_map<wstring_view, any>};
 };
 
 } // namespace Engine::Utils

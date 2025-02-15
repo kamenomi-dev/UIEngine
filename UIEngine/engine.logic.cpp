@@ -38,7 +38,7 @@ static void __TryHitTestConditionNext(
             continue;
         }
 
-        auto resultComp = conditionFunc(lParam, currComp, currComp->GetChildCompnents(), resultComponents);
+        auto resultComp = conditionFunc(lParam, currComp, currComp->ComponentChildren, resultComponents);
 
         if (resultComp != nullptr) {
             resultComponents.push_back(resultComp);
@@ -93,7 +93,7 @@ vector<CBase*> CComponentTree::TryHitTest(Point targetPoint) {
 vector<CBase*> CComponentTree::TryHitTestWithCondition(TTryHittestCondition conditionFunc, LPVOID lParam) {
     vector<CBase*> resultComps{};
 
-    resultComps.push_back(conditionFunc(lParam, _pRootWindow, _pRootWindow->GetChildCompnents(), resultComps));
+    resultComps.push_back(conditionFunc(lParam, _pRootWindow, _pRootWindow->ComponentChildren, resultComps));
 
     return resultComps;
 }
