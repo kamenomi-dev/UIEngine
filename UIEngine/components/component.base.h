@@ -11,7 +11,7 @@ public:
     friend class CWindow;
 
     CBase(vector<Utils::PropertyPair> pairs) : CProperty(pairs) {
-        ComponentVisible  |= false;
+        ComponentVisible  |= true;
         ComponentDisabled |= false;
 
         ComponentRect = ComponentRect.IsEmptyArea() ? Rect(0, 0, 800, 600) : ComponentRect;

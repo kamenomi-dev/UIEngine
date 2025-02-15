@@ -49,9 +49,9 @@ CWindow* UIManager::CreateCentralWindow(wstring titleText, wstring className, Si
 
 CWindow* UIManager::CreateNormalWindow(wstring titleText, wstring className, Rect windowRect, CWindow* parentWindow) {
     auto newWindow = new CWindow({
-        {L"titleText",    (titleText)     },
-        {L"classText",    (className)     },
-        {L"parentWindow", parentWindow    }
+        {L"titleText",    (titleText) },
+        {L"classText",    (className) },
+        {L"parentWindow", parentWindow}
     });
 
     newWindow->WindowRect = windowRect;
@@ -155,20 +155,20 @@ LRESULT UIManager::WindowsMessageProcessor(HWND hWnd, UINT uMsg, WPARAM wParam, 
     }
 
     if (uMsg == WM_SIZE) {
-        currentWindow._Native_SetWindowSize({GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)});
+        if (&currentWindow) currentWindow._Native_SetWindowSize({GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)});
 
         return 0;
     }
 
     if (uMsg == WM_MOVE) {
-        currentWindow._Native_SetWindowPosition({GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)});
+        if (&currentWindow) currentWindow._Native_SetWindowPosition({GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)});
 
         return 0;
     }
 
     // Todo, how?
     if (uMsg == WM_PAINT) {
-        currentWindow._Native_ComponentMessageProcessor(hWnd, uMsg, wParam, lParam, bNoop);
+        if (&currentWindow) currentWindow._Native_ComponentMessageProcessor(hWnd, uMsg, wParam, lParam, bNoop);
 
         return 0;
     }
