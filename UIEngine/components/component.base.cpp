@@ -1,12 +1,30 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later */
+/*
+ *    Gdiplus UI, using gdiplus, is a UI library of Windows platform which
+ *    is based on C++.
+ *     Copyright (C) 2025  Project Contributors
+ *
+ *    This program is free software: you can redistribute it and/or modify
+ *    it under the terms of the GNU General Public License as published by
+ *    the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU General Public License for more details.
+ *
+ *    You should have received a copy of the GNU General Public License
+ *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 #include "pch.h"
-
 #include "../engine.h"
 
 using namespace Engine::Component;
 
-// Component Message
+// ComponentBase Message
 
-void CBase::Render(Gdiplus::Graphics& graphics) {
+void ComponentBase::Render(Gdiplus::Graphics& graphics) {
     static unordered_map<void*, Gdiplus::Color> map{};
 
     if (map.find(this) == map.end()) {
@@ -16,25 +34,24 @@ void CBase::Render(Gdiplus::Graphics& graphics) {
     graphics.Clear(map[this]);
 }
 
-LRESULT CBase::_Native_ComponentMessageProcessor(UINT uMsg, WPARAM wParam, LPARAM lParam, bool& isReturn) {
+LRESULT ComponentBase::_Native_ComponentMessageProcessor(UINT uMsg, WPARAM wParam, LPARAM lParam, bool& isReturn) {
 
     if (uMsg == WM_CLOSE) {
-        _Native_TransformMessageProcessor(CM_DESTROY, NULL, NULL);
 
-        for (auto& child : GetChildCompnents()) {
-            child->_Native_ComponentMessageProcessor(WM_CLOSE, NULL, NULL, isReturn);
+        auto current = NodeData.FirstChild;
+        while (current != nullptr) {
+            current->_Native_TransformMessageProcessor(CM_DESTROY, NULL, NULL);
 
-            delete child;
-            child = nullptr;
+            current = current->NodeData.Next;
         }
 
-        GetChildCompnents().clear();
+        _Native_TransformMessageProcessor(CM_DESTROY, NULL, NULL);
     }
 
     return 0;
 }
 
-void CBase::_Native_TransformMessageProcessor(UINT uMsg, WPARAM wParam, LPARAM lParam) {
+void ComponentBase::_Native_TransformMessageProcessor(UINT uMsg, WPARAM wParam, LPARAM lParam) {
     if (uMsg == CM_DESTROY) {
         (void)cos(1);
     }
@@ -48,6 +65,8 @@ void CBase::_Native_TransformMessageProcessor(UINT uMsg, WPARAM wParam, LPARAM l
     }
 
     if (uMsg == CM_PAINT) {
-        Render(*(Gdiplus::Graphics*)lParam);
+        if (Visible) {
+            Render(*(Gdiplus::Graphics*)lParam);
+        }
     }
 }

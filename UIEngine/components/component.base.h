@@ -3,150 +3,189 @@
 #ifndef __COMPONENT_BASE_H__
 #define __COMPONENT_BASE_H__
 
-namespace Engine ::Component {
+namespace Engine::Component {
 
-struct BasePropertyDataType {
-    bool           Visible;
-    bool           Disabled;
-    Rect           ComponentRect;
-    wstring        ComponentLabel;
-    CBase*         ComponentParent;
-    vector<CBase*> ComponentChildren;
+class ComponentBase;
+
+enum class UIENGINE_API ComponentStatusFlags : UINT { None = FLAG_INDEX(0), Visible = FLAG_INDEX(1), Disable = FLAG_INDEX(2) };
+
+struct UIENGINE_API     NodeDataType {
+    ComponentBase* Parent;
+    ComponentBase* Prev;
+    ComponentBase* Next;
+    ComponentBase* FirstChild;
+    ComponentBase* LastChild;
+
+    NodeDataType() {
+        Parent     = nullptr;
+        Prev       = nullptr;
+        Next       = nullptr;
+        FirstChild = nullptr;
+        LastChild  = nullptr;
+    }
 };
 
-class UIENGINE_API CBase {
-public:
-    friend class CWindow;
+struct UIENGINE_API CommonComponentDataType {
+    NodeDataType Node{};
+    wstring      ComponentID{};
 
-    CBase() {
-        Visible  = false;
-        Disabled = false;
+    UINT         StatusFlag{(UINT)ComponentStatusFlags::None};
+    Size         ComponentSize{};
+    Point        ComponentPosition{};
+};
 
-        if (ComponentRect.IsEmptyArea()) {
-            ComponentRect = Rect(0, 0, 800, 600);
-        }
+class UIENGINE_API ComponentBase {
+  private:
+    HWND _nativeWindow{nullptr};
 
-        if (ComponentLabel.empty()) {
-            ComponentLabel = L"Component.Base";
+  public:
+    friend class Window;
+
+    ComponentBase() { _componentData.ComponentID = L"Component.Base"; }
+    ~ComponentBase() {
+        ComponentBase::SplitComponentRelation(this);
+
+        auto current = NodeData.FirstChild;
+        while (current != nullptr) {
+            const auto next = current->NodeData.Next;
+
+            delete current;
+            current = next;
         }
     }
 
-public:
-    virtual void Initialize(){};
+  public:
+    virtual void Initialize() {};
+    void         SetStatusFlag(std::initializer_list<ComponentStatusFlags> flags) { Utils::CombineFlag(_componentData.StatusFlag, flags); }
+    void         InsertComponentChild(ComponentBase* child) {
+        ComponentBase::SplitComponentRelation(child);
 
-    virtual void    Render(Gdiplus::Graphics&);
-    virtual LRESULT _Native_ComponentMessageProcessor(UINT, WPARAM, LPARAM, bool&);
-    virtual void    _Native_TransformMessageProcessor(UINT, WPARAM, LPARAM);
+        child->_componentData.Node.Parent = this;
+
+        if (NodeData.FirstChild == nullptr) {
+            _componentData.Node.FirstChild = child;
+            _componentData.Node.LastChild  = child;
+
+            return;
+        }
+
+        if (NodeData.LastChild != nullptr) {
+            _componentData.Node.LastChild->_componentData.Node.Next = child;
+            child->_componentData.Node.Prev                         = NodeData.LastChild;
+
+            _componentData.Node.LastChild = child;
+        }
+    }
+
+
+  public:
+    const wstring_view GetComponentID() const { return BaseData.ComponentID; }
+
+    virtual void       Render(Gdiplus::Graphics&);
+    virtual LRESULT    _Native_ComponentMessageProcessor(UINT, WPARAM, LPARAM, bool&);
+    virtual void       _Native_TransformMessageProcessor(UINT, WPARAM, LPARAM);
+
+  public:
+    static void SplitComponentRelation(_Inout_ ComponentBase* comp) {
+        if (comp->NodeData.Parent != nullptr) {
+            auto parent = comp->NodeData.Parent;
+
+            if (parent->NodeData.FirstChild == comp) {
+                parent->_componentData.Node.FirstChild = comp->NodeData.Next;
+            }
+
+            if (parent->NodeData.LastChild == comp) {
+                parent->_componentData.Node.LastChild = parent->NodeData.Prev;
+            }
+
+            comp->_componentData.Node.Parent = nullptr;
+        }
+
+        if (comp->NodeData.Prev != nullptr) comp->_componentData.Node.Prev = comp->NodeData.Next;
+        if (comp->NodeData.Next != nullptr) comp->_componentData.Node.Next = comp->NodeData.Prev;
+
+        comp->_componentData.Node.Prev = comp->_componentData.Node.Next = nullptr;
+    }
+
+    static void DestroyComponentAndChildren(_In_ ComponentBase* comp) {
+        delete comp;
+
+        /*
+        auto current = comp;
+        while (current != nullptr) {
+            if (current->NodeData.FirstChild) {
+                DestroyComponentAndChildren(comp->NodeData.FirstChild);
+            }
+
+            const auto next = current->NodeData.Next;
+
+            delete current;
+            current = next;
+         }
+         */
+    }
 
     /*
      *
-     *   Component Property Part.
+     *    Component Data Part.
+     *    Base data:
+     *        Type -------- Property -------- Access ------ Comment -----------------------------------------------------------
+     *        NodeDataType  Node              Getter/Setter The Parent property cannot be changed in the WindowComponent class.
+     *        bool          Visible           Getter/Setter    /
+     *        bool          Disabled          Getter/Setter    /
+     *        Size          ComponentSize     Getter/Setter    /
+     *        Point         ComponentPosition Getter/Setter    /
      *
      */
 
-public:
-    BasePropertyDataType _basePropertyData{};
+  public:
+    CommonComponentDataType _componentData{};
 
-public:
-    BasePropertyDataType&       _Property_GetBasePropertyData() { return _basePropertyData; }
-    const BasePropertyDataType& _Property_GetBasePropertyData() const { return _basePropertyData; }
+  public:
+    const CommonComponentDataType& GetBaseData() const { return _componentData; }
+    void                           SetBaseData(_In_ const CommonComponentDataType& data) { _componentData = data; }
 
-    bool _Property_IsVisible() const { return BaseProperty.Visible; };
-    void _Property_SetVisible(bool newStatus) {
-        // Todo! Support dynamic render.
-        BaseProperty.Visible = newStatus;
-    };
+    const NodeDataType&            GetNodeData() const { return _componentData.Node; }
+    void                           SetNodeData(_In_ const NodeDataType& data) { _componentData.Node = data; }
 
-    bool _Property_IsDisabled() const { return BaseProperty.Disabled; };
-    void _Property_SetDisabled(bool newStatus) {
-        // Todo! Support dynamic render.
-        BaseProperty.Disabled = newStatus;
-    };
+    const UINT&                    GetStatusFlags() const { return _componentData.StatusFlag; }
 
-    virtual wstring _Property_GetComponentClass() const { return L"Component.Base"s; }
-
-    CBase*       _Property_GetComponentParent() { return BaseProperty.ComponentParent; }
-    const CBase* _Property_GetComponentParent() const { return BaseProperty.ComponentParent; }
-    void         _Property_SetComponentParent(CBase* parent) {
-        // Todo! Support dynamic render.
-
-        BaseProperty.ComponentParent = parent;
-        parent->ComponentChildren    = parent;
-    }
-
-    vector<CBase*>&       _Property_GetComponentChildren() { return BaseProperty.ComponentChildren; };
-    const vector<CBase*>& _Property_GetComponentChildren() const { return BaseProperty.ComponentChildren; };
-    void                  _Property_SetComponentChildren(CBase* child) {
-        child->ComponentParent = this;
-        BaseProperty.ComponentChildren.push_back(child);
-    }
-    void _Property_SetComponentChildren(vector<CBase*> children) {
-        for (auto& child : children) {
-            child->ComponentParent = this;
+    bool                           IsVisible() const { return Utils::HasFlag(StatusFlags, ComponentStatusFlags::Visible); };
+    void                           SetVisible(_In_ const bool status) {
+        if (status) {
+            _componentData.StatusFlag |= (UINT)ComponentStatusFlags::Visible;
+            return;
         }
 
-        BaseProperty.ComponentChildren.insert(BaseProperty.ComponentChildren.end(), children.begin(), children.end());
-    }
+        _componentData.StatusFlag &= ~(UINT)ComponentStatusFlags::Visible;
+    };
 
-    wstring _Property_GetComponentLabel() const { return BaseProperty.ComponentLabel; }
-    void    _Property_SetComponentLabel(wstring newLabel) {
-        // Todo! Support dynamic render.
-        BaseProperty.ComponentLabel = newLabel;
-    }
+    bool IsDisabled() const { return Utils::HasFlag(StatusFlags, ComponentStatusFlags::Visible); };
+    void SetDisabled(_In_ const bool status) {
+        if (status) {
+            _componentData.StatusFlag |= (UINT)ComponentStatusFlags::Disable;
+            return;
+        }
 
-    Rect& _Property_GetComponentRect() { return BaseProperty.ComponentRect; }
-    const Rect& _Property_GetComponentRect() const { return BaseProperty.ComponentRect; }
-    Rect& _Property_SetComponentRect(Rect newRect) {
-        // Todo! Support dynamic render.
-        BaseProperty.ComponentRect = newRect;
+        _componentData.StatusFlag &= ~(UINT)ComponentStatusFlags::Disable;
+    };
 
-        return BaseProperty.ComponentRect;
-    }
+    const Size&  GetComponentSize() const { return _componentData.ComponentSize; }
+    void         SetComponentSize(const Size& size) { _componentData.ComponentSize = size; }
 
-    Size _Property_GetComponentSize() const {
-        Size returnSize{};
+    const Point& GetComponentPosition() const { return _componentData.ComponentPosition; }
+    void         SetComponentPosition(const Point& pos) { _componentData.ComponentPosition = pos; }
 
-        ComponentRect.GetSize(&returnSize);
+  public:
+    COMPONENT_PROPERTY(GetBaseData, SetBaseData) CommonComponentDataType BaseData;
+    COMPONENT_PROPERTY(GetNodeData, SetNodeData) NodeDataType            NodeData;
+    COMPONENT_PROPERTY_GETTER_ONLY(GetStatusFlags) UINT                  StatusFlags;
 
-        return returnSize;
-    }
-    Size _Property_SetComponentSize(Size newSize) {
-        // Todo! Support dynamic render.
-        BaseProperty.ComponentRect.Width  = newSize.Width;
-        BaseProperty.ComponentRect.Height = newSize.Height;
+    COMPONENT_PROPERTY(IsVisible, SetVisible) bool                       Visible;
+    COMPONENT_PROPERTY(IsDisabled, SetDisabled) bool                     Disabled;
 
-        return newSize;
-    }
-
-    Point _Property_GetComponentPosition() const {
-        Point returnPosition{};
-
-        ComponentRect.GetLocation(&returnPosition);
-
-        return returnPosition;
-    }
-    Point _Property_SetComponentPosition(Point newPosition) {
-        // Todo! Support dynamic render.
-        _basePropertyData.ComponentRect.X = newPosition.X;
-        _basePropertyData.ComponentRect.Y = newPosition.Y;
-
-        return newPosition;
-    }
-
-    COMPONENT_PROPERTY(_Property_GetBasePropertyData, _Property_SetBasePropertyData)
-    BasePropertyDataType BaseProperty;
-
-    COMPONENT_PROPERTY(_Property_IsVisible, _Property_SetVisible) bool Visible;
-    COMPONENT_PROPERTY(_Property_IsDisabled, _Property_SetDisabled) bool Disabled;
-
-    COMPONENT_PROPERTY(_Property_GetComponentParent, _Property_SetComponentParent) CBase* ComponentParent;
-    COMPONENT_PROPERTY(_Property_GetComponentChildren, _Property_SetComponentChildren) vector<CBase*> ComponentChildren;
-
-    COMPONENT_PROPERTY(_Property_GetComponentLabel, _Property_SetComponentLabel) wstring ComponentLabel;
-    COMPONENT_PROPERTY(_Property_GetComponentRect, _Property_SetComponentRect) Rect ComponentRect;
-    COMPONENT_PROPERTY(_Property_GetComponentSize, _Property_SetComponentSize) Size ComponentSize;
-    COMPONENT_PROPERTY(_Property_GetComponentPosition, _Property_SetComponentPosition) Point ComponentPosition;
-    COMPONENT_PROPERTY_GETTER_ONLY(_Property_GetComponentClass) wstring ComponentClass;
+    COMPONENT_PROPERTY(GetComponentSize, SetComponentSize) Size          ComponentSize;
+    COMPONENT_PROPERTY(GetComponentPosition, SetComponentPosition) Point ComponentPosition;
 };
 } // namespace Engine::Component
 

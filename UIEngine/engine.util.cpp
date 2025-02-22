@@ -18,29 +18,4 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include "pch.h"
-
 #include "engine.h"
-
-using namespace Engine::Utils;
-
-CProperty::CProperty(const vector<PropertyPair>& pairs) {
-    for (auto& pair : pairs) {
-        SetPropertyByValue(pair.propertyKey, pair.propertyValue);
-    }
-}
-
-void CProperty::SetPropertyByValue(const wstring_view& key, any value) { (*_propertyData)[key] = value; }
-
-void CProperty::SetPropertyByRef(const wstring_view& key, any& value) { (*_propertyData)[key].swap(value); }
-
-void CProperty::SetPropertyIfNotExistByValue(const wstring_view& key, any value) {
-    if (!_propertyData->contains(key)) {
-        SetPropertyByValue(key, value);
-    }
-}
-
-void CProperty::SetPropertyIfNotExistByRef(const wstring_view& key, any& value) {
-    if (!_propertyData->contains(key)) {
-        SetPropertyByRef(key, value);
-    }
-}

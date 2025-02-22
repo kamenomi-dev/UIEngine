@@ -6,113 +6,147 @@
 
 namespace Engine::Component {
 
-enum class WindowFrameFlag { None = FLAG_INDEX(0), Central = FLAG_INDEX(1), Borderless = FLAG_INDEX(2) };
+enum class UIENGINE_API WindowFrameFlag : UINT { None = FLAG_INDEX(0), Central = FLAG_INDEX(1), Borderless = FLAG_INDEX(2) };
 
-struct WindowPropertyDataType {
-    UINT FrameFlag; // More see WindowFrameFlag.
+struct UIENGINE_API     WindowDataType {
+    UINT       FrameFlag{(UINT)WindowFrameFlag::None};
 
-    HWND       WindowHandle;
-    Rect       WindowRect; // It is not as same as ComponentRect in BasePropertyDataType.
-    wstring    WindowTitleText;
-    wstring    WindowClassText;
-    WNDCLASSEX WindowClassInformation;
+    HWND       WindowHandle{nullptr};
+    bool       IsOwnerWindow{false}; // Owner window is unique to all of windows.
+    Size       WindowSize{800, 600};
+    Point      WindowPosition{0, 0};
+    wstring    WindowClassText{L"Component_Window"};
+    wstring    WindowTitleText{L"视窗"};
+    WNDCLASSEX WindowClassInformation{};
 };
 
-class UIENGINE_API CWindow : public CBase {
-public:
-    CWindow(WindowFrameFlag);
-    ~CWindow();
+class UIENGINE_API Window : public ComponentBase {
+  public:
+    Window() : ComponentBase() {
+        _componentData.ComponentSize     = {800, 600};
+        _componentData.ComponentPosition = {0, 0};
+    }
+    ~Window() {
+        if (!_initialized) {
+            return;
+        }
 
-    void Initialize();
+        DestroyWindow(WindowHandle);
 
-private:
+        RegisterClassEx(&_windowData.WindowClassInformation);
+        _windowData.WindowClassInformation = {};
+
+        _initialized = false;
+    }
+
+    void    Initialize();
+    void    SetFrameFlag(std::initializer_list<WindowFrameFlag> flags) { Utils::CombineFlag(_windowData.FrameFlag, flags); }
+
+    void    _Native_UpdateWindowSize(Size);
+    void    _Native_UpdateWindowPosition(Point);
+    LRESULT _Native_ComponentMessageProcessor(UINT, WPARAM, LPARAM, bool&);
+
+  private:
     void _UpdateSwapBufferSize() {
         if (not _swapBuffer) {
             return;
         }
 
-        unordered_map<CWindow*, Size> lastSizeMap{};
-        auto&                         lastSize = lastSizeMap[this];
+        static Size lastSize{WindowSize};
+
+        if (lastSize.Equals(WindowSize)) {
+            return;
+        }
+
+        _swapBuffer->RefreshSize();
+        lastSize = WindowSize;
     }
 
-private:
-    bool                           _initialized{false};
-    unique_ptr<Render::SwapBuffer> _swapBuffer;
+  public:
+    static unordered_map<HWND, Window*>& GetWindowMap() { return WindowMap; }
+
+    unique_ptr<Logic::CComponentTree>    componentTree; // 组件树类，有命中测试的方法
+
+  private:
+    bool                                _initialized{false};
+    unique_ptr<Render::SwapBuffer>      _swapBuffer;
+
+    static unordered_map<HWND, Window*> WindowMap;
 
     /*
      *
-     *   Component Property Part.
+     *    Component Data Part.
+     *    Window data:
+     *        Type --- Property -------- Access ------- Comment -------------------------------
+     *        HWND     WindowHandle      Getter Only      /
+     *        wstring  WindowTitleText   Getter/Setter    /
+     *        Size     WindowSize        Getter/Setter  Do not be called by Native. !!!!!!!!!!!
+     *        Point    WindowPosition    Getter/Setter  Do not be called by Native. !!!!!!!!!!!
+     *
+     *     Base Data: (Rewrited)
+     *        Type - Property --------- Access ----- Comment -----------------------------------------------------------------------------------------------------
+     *        Point  ComponentPosition  Getter Only  Position of component could not be changed. If want to move window, you should change WindowPosition instead.
      *
      */
 
-private:
-    WindowPropertyDataType _windowProperty{};
+    WindowDataType _windowData{};
 
-public:
-    WindowPropertyDataType&       _Property_GetWindowPropertyData() { return _windowProperty; }
-    const WindowPropertyDataType& _Property_GetWindowPropertyData() const { return _windowProperty; }
+  public:
+    const WindowDataType& GetWindowData() const { return _windowData; }
+    void                  SetWindowData(_In_ const WindowDataType& data) { _windowData = data; }
 
-    const HWND _Property_GetWindowHandle() const { return WindowProperty.WindowHandle; };
+    const UINT&           GetFrameStatus() const { return _windowData.FrameFlag; }
 
-    const wstring& _Property_GetWindowClassText() const { return WindowProperty.WindowClassText; };
-    const wstring& _Property_SetWindowClassText(const wstring& newClass) { return WindowProperty.WindowClassText = newClass; };
+    const HWND            GetWindowHandle() const { return _windowData.WindowHandle; }
 
-    const wstring& _Property_GetWindowTitleText() const { return WindowProperty.WindowClassText; };
-    const wstring& _Property_SetWindowTitleText(const wstring& newTitle) { return WindowProperty.WindowClassText = newTitle; };
+    const wstring&        GetWindowClassText() const { return _windowData.WindowClassText; }
+    void                  SetWindowClassText(const wstring& classText) {
+        if (_initialized) {
+            throw std::logic_error("Window class cannot be changed after having been initialized. ");
+        }
 
-
-    Rect&       _Property_GetWindowRect() { return WindowProperty.WindowRect; }
-    const Rect& _Property_GetWindowRect() const { return WindowProperty.WindowRect; }
-    Rect&       _Property_SetWindowRect(Rect newRect) {
-        // Todo! Support dynamic render.
-        WindowProperty.WindowRect = newRect;
-
-        return WindowProperty.WindowRect;
+        _windowData.WindowClassText = classText;
     }
 
-    Size _Property_GetWindowSize() const {
-        Size returnSize{};
+    const wstring& GetWindowTitle() const { return _windowData.WindowTitleText; }
+    void           SetWindowTitle(const wstring& titleText) {
+        if (_initialized) {
+            ::SetWindowTextW(WindowHandle, titleText.c_str());
+        }
 
-        ComponentRect.GetSize(&returnSize);
-
-        return returnSize;
-    }
-    Size _Property_SetWindowSize(Size newSize) {
-        // Todo! Support dynamic render.
-        WindowRect.Width  = newSize.Width;
-        WindowRect.Height = newSize.Height;
-
-        return newSize;
+        _windowData.WindowTitleText = titleText;
     }
 
-    Point _Property_GetWindowPosition() const {
-        Point returnPosition{};
+    // DELETE ME // SetWindowSize/Position -> WindowsMessageProcessor -> _Native_SetWindowSize/Position.
 
-        WindowRect.GetLocation(&returnPosition);
-
-        return returnPosition;
-    }
-    Point _Property_SetWindowPosition(Point newPosition) {
-        // Todo! Support dynamic render.
-        WindowRect.X = newPosition.X;
-        WindowRect.Y = newPosition.Y;
-
-        return newPosition;
+    Size GetWindowSize() const { return _windowData.WindowSize; }
+    void SetWindowSize(_In_ const Size& size) {
+        if (_initialized) {
+            ::SetWindowPos(WindowHandle, nullptr, 0, 0, size.Width, size.Height, SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
+        }
+        _windowData.WindowSize = size;
     }
 
-    COMPONENT_PROPERTY(_Property_GetWindowPropertyData, _Property_SetWindowPropertyData)
-    WindowPropertyDataType WindowProperty;
+    Point GetWindowPosition() const { return _windowData.WindowPosition; }
+    void  SetWindowPosition(_In_ const Point& pos) {
+        if (_initialized) {
+            ::SetWindowPos(WindowHandle, nullptr, pos.X, pos.Y, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+        }
 
-    COMPONENT_PROPERTY_GETTER_ONLY(_Property_GetWindowHandle) HWND WindowHandle;
-    COMPONENT_PROPERTY(_Property_GetWindowClassText, _Property_SetWindowClassText)
-    wstring WindowClassText;
-    COMPONENT_PROPERTY(_Property_GetWindowTitleText, _Property_SetWindowTitleText)
-    wstring WindowTitleText;
-    COMPONENT_PROPERTY(_Property_GetWindowRect, _Property_SetWindowRect) Rect WindowRect;
-    COMPONENT_PROPERTY(_Property_GetWindowSize, _Property_SetWindowSize) Size WindowSize;
-    COMPONENT_PROPERTY(_Property_GetWindowPosition, _Property_SetWindowPosition) Point WindowPosition;
+        _windowData.WindowPosition = pos;
+    }
 
-    COMPONENT_PROPERTY_GETTER_ONLY(_Property_GetComponentPosition) Point ComponentPosition;
+  public:
+    COMPONENT_PROPERTY(GetWindowData, SetWindowData) WindowDataType    WindowData;
+    COMPONENT_PROPERTY_GETTER_ONLY(GetFrameStatus) UINT                FrameFlags;
+
+    COMPONENT_PROPERTY_GETTER_ONLY(GetWindowHandle) HWND               WindowHandle;
+    COMPONENT_PROPERTY(GetWindowClassText, SetWindowClassText) wstring WindowClassText;
+    COMPONENT_PROPERTY(GetWindowTitle, SetWindowTitle) wstring         WindowTitle;
+    COMPONENT_PROPERTY(GetWindowSize, SetWindowSize) Size              WindowSize;
+    COMPONENT_PROPERTY(GetWindowPosition, SetWindowPosition) Point     WindowPosition;
+
+    COMPONENT_PROPERTY_GETTER_ONLY(GetComponentPosition) Point         ComponentPosition;
 };
 
 } // namespace Engine::Component
@@ -126,10 +160,10 @@ public:
 //
 // namespace Engine::Component {
 //
-// class UIENGINE_API CWindow : public CBase {
+// class UIENGINE_API Window : public BaseComponent {
 // public:
-//     CWindow(vector<Utils::PropertyPair>);
-//     ~CWindow() {
+//     Window(vector<Utils::PropertyPair>);
+//     ~Window() {
 //         DestroyWindow(_windowHandle);
 //         RegisterClassExW(&_windowClassInfo);
 //
@@ -151,7 +185,7 @@ public:
 //
 //         return _windowHandle;
 //     }
-//     void SetWindowOwner(CWindow* pOwner) {
+//     void SetWindowOwner(Window* pOwner) {
 //         SetPropertyByValue(L"parentWindow", pOwner);
 //         SetPropertyByValue(L"isOwnerWindow", pOwner != nullptr);
 //     }
@@ -189,7 +223,7 @@ public:
 //     void _RegisterClass();
 //     HWND _CreateWindow();
 //     void _UpdateWindowSwapBuffer() {
-//         static unordered_map<CWindow*, Size> lastSizeMap{};
+//         static unordered_map<Window*, Size> lastSizeMap{};
 //         auto&                                lastSize = lastSizeMap[this];
 //
 //         if (not lastSize.Equals(ComponentSize)) {

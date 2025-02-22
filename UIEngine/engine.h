@@ -19,7 +19,7 @@
 #define CHECK_RESULT_BOOL(ret) ret;
 #endif
 
-#define FLAG_INDEX(idx) idx != 0 ? 1u << idx : NULL
+#define FLAG_INDEX(idx) 1u << idx
 #define FLAG_MATCH(flags, flag) ((UINT)flags & (UINT)flag) == 1
 
 #define COMPONENT_PROPERTY(Getter, Setter)     __declspec(property(get = Getter, put = Setter))

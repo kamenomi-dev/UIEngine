@@ -5,53 +5,19 @@
 
 namespace Engine::Utils {
 
-struct PropertyPair {
-    wstring propertyKey;
-    any     propertyValue;
-};
+template <typename Ty>
+inline [[nodiscard]] bool HasFlag(_In_ unsigned int flags, _In_ Ty curr) {
+    return (flags & (unsigned int)curr) != 0;
+}
 
-class UIENGINE_API CProperty {
-public:
-    CProperty(const vector<PropertyPair>&);
-
-    void SetPropertyByValue(const wstring_view& key, any);
-    void SetPropertyByRef(const wstring_view& key, any&);
-
-    void SetPropertyIfNotExistByValue(const wstring_view& key, any);
-    void SetPropertyIfNotExistByRef(const wstring_view& key, any&);
-
-    any& GetProperty(const wstring_view& key) {
-        const auto it = _propertyData->find(key);
-        if (it == _propertyData->end()) {
-            DebugBreak();
-            abort();
-        }
-        return it->second;
+template <typename Ty>
+inline [[nodiscard]] void CombineFlag(_Inout_ unsigned int& outFlag, _In_ std::initializer_list<Ty> flags) {
+    for (auto flag : flags) {
+        outFlag |= static_cast<unsigned int>(flag);
     }
-    const any& GetProperty(const wstring_view& key) const {
-        const auto it = _propertyData->find(key);
-        if (it == _propertyData->end()) {
-            DebugBreak();
-            abort();
-        }
-        return it->second;
-    }
+}
 
-    auto& GetPropertyData() { return *_propertyData; }
-    auto& GetPropertyData() const { return *_propertyData; }
-
-    template <class T>
-    auto& GetPropertyTyped(const wstring_view& key) {
-        return any_cast<T&>(GetProperty(key));
-    }
-    template <class T>
-    auto& GetPropertyTyped(const wstring_view& key) const {
-        return any_cast<const T&>(GetProperty(key));
-    }
-
-private:
-    unique_ptr<unordered_map<wstring_view, any>> _propertyData{new unordered_map<wstring_view, any>};
-};
+inline [[nodiscard]] Rect RectToGpRect(const RECT& rc) { return Rect(rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top); }
 
 } // namespace Engine::Utils
 

@@ -8,23 +8,11 @@ namespace Engine {
 class UIENGINE_API UIManager final {
 public:
     [[nodiscard]] HINSTANCE GetProcessInstance() const { return _processInstance; };
-    [[nodiscard]] auto&     GetWindowMap() { return _windowMap; };
 
-    Component::CWindow* CreateCentralWindow(
-        wstring             titleText,
-        wstring             className    = L"UIEngine.Window",
-        Size                windowSize   = {800, 600},
-        Component::CWindow* parentWindow = nullptr
-    );
-    Component::CWindow* CreateNormalWindow(
-        wstring             titleText,
-        wstring             className    = L"UIEngine.Window",
-        Rect                windowRect   = {0, 0, 800, 600},
-        Component::CWindow* parentWindow = nullptr
-    );
+    void InitializeWindow(vector<Component::Window*>);
 
     static LRESULT WindowsMessageProcessor(HWND, UINT, WPARAM, LPARAM);
-    int     StartMessageLoop() {
+    int            StartMessageLoop() {
         MSG msgStruct{};
 
         while (GetMessageW(&msgStruct, nullptr, 0, 0)) {
@@ -36,12 +24,8 @@ public:
     };
 
 private:
-    HINSTANCE                                _processInstance{};
-    unordered_map<HWND, Component::CWindow*> _windowMap{};
-    unordered_map<HWND, Component::CWindow*> _mainWindowMap{};
-
-    void _InsertWindowMap(HWND, Component::CWindow*);
-
+    HINSTANCE                   _processInstance{};
+    vector<Component::Window*> _windowList;
 
 public:
     static auto& Initialize(HINSTANCE instance) {

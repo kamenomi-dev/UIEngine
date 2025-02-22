@@ -1,42 +1,38 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later */
+/*
+ *    Gdiplus UI, using gdiplus, is a UI library of Windows platform which
+ *    is based on C++.
+ *     Copyright (C) 2025  Project Contributors
+ *
+ *    This program is free software: you can redistribute it and/or modify
+ *    it under the terms of the GNU General Public License as published by
+ *    the Free Software Foundation, either version 3 of the License, or
+ *     any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU General Public License for more details.
+ *
+ *    You should have received a copy of the GNU General Public License
+ *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 #include "pch.h"
-
 #include "../engine.h"
 
 using Engine::Render::SwapBuffer;
 using namespace Engine::Logic;
 using namespace Engine::Component;
 
-// For fun? DELETE SINCE RELEASE
-static int _windowIndex = 1;
+unordered_map<HWND, Window*> Window::WindowMap{};
 
-CWindow::CWindow(WindowFrameFlag frameFlags) : CBase() {
-    WindowProperty.FrameFlag = frameFlags;
+// ---
 
-    Visible         = true;
-    WindowRect      = Rect(0, 0, 800, 600);
-    WindowClassText = L"Component_Window"s;
-    WindowTitleText = L"视窗 "s + std::to_wstring(_windowIndex++);
-}
-
-CWindow::~CWindow() {
-    if (!_initialized) {
-        return;
-    }
-}
-
-void CWindow::Initialize() {
-    static vector<CWindow*> initializedWindowList{};
-
-    bool isInitedAlready{false};
-    for (auto& window : initializedWindowList) {
-        if (window == this) {
-            isInitedAlready;
-            break;
+void Window::Initialize() {
+    for (auto& window : WindowMap) {
+        if (window.second == this) {
+            throw std::logic_error("Window has initialized already. ");
         }
-    }
-
-    if (isInitedAlready) {
-        throw std::logic_error("CWindow has initialized already. ");
     }
 
     {
@@ -45,38 +41,41 @@ void CWindow::Initialize() {
         classInfo.cbSize        = sizeof WNDCLASSEX;
         classInfo.hInstance     = UIManager::Get().GetProcessInstance();
         classInfo.lpfnWndProc   = &UIManager::Get().WindowsMessageProcessor;
-        classInfo.lpszClassName = WindowClassText.c_str();
+        classInfo.lpszClassName = _windowData.WindowClassText.c_str();
 
         if (!RegisterClassEx(&classInfo)) {
             // Maybe warn?
         }
 
-        WindowProperty.WindowClassInformation = classInfo;
+        _windowData.WindowClassInformation = classInfo;
     }
 
     {
-        Rect& actualRect  = WindowRect;
-        DWORD actualStyle = WS_OVERLAPPEDWINDOW;
+
+        Rect  actualRect  = Rect{WindowPosition, WindowSize};
+        DWORD actualStyle = NULL;
 
         if (Visible) {
             actualStyle |= WS_VISIBLE;
         }
 
-        if (FLAG_MATCH(WindowProperty.FrameFlag, WindowFrameFlag::Central)) {
+        if (Utils::HasFlag(_windowData.FrameFlag, WindowFrameFlag::Central)) {
             const auto screenWidth  = GetSystemMetrics(SM_CXSCREEN);
             const auto screenHeight = GetSystemMetrics(SM_CYSCREEN);
 
             actualRect = {((int)screenWidth - WindowSize.Width) / 2, ((int)screenHeight - WindowSize.Height) / 2, WindowSize.Width, WindowSize.Height};
         }
 
-        if (FLAG_MATCH(WindowProperty.FrameFlag, WindowFrameFlag::Borderless)) {
-            actualStyle |= WS_POPUPWINDOW;
+        if (Utils::HasFlag(_windowData.FrameFlag, WindowFrameFlag::Borderless)) {
+            actualStyle |= WS_POPUP;
+        } else {
+            actualStyle |= WS_OVERLAPPEDWINDOW;
         }
 
-        WindowProperty.WindowHandle = CreateWindowExW(
+        _windowData.WindowHandle = CreateWindowExW(
             WS_EX_OVERLAPPEDWINDOW,
             WindowClassText.c_str(),
-            WindowTitleText.c_str(),
+            WindowTitle.c_str(),
             actualStyle,
             actualRect.X,
             actualRect.Y,
@@ -88,17 +87,130 @@ void CWindow::Initialize() {
             nullptr
         );
 
-        if (WindowProperty.WindowHandle == nullptr) {
+        if (WindowHandle == nullptr) {
             throw std::runtime_error("Create window failed! ");
         }
     }
 
-    _initialized = true;
-    initializedWindowList.push_back(this);
+    {
+        _swapBuffer   = make_unique<Render::SwapBuffer>(WindowHandle);
+        componentTree = make_unique<Logic::CComponentTree>(this);
+    }
+
+    _initialized            = true;
+    WindowMap[WindowHandle] = this;
+
+    // if (WindowMap.size() == 1) {
+    //     this->WindowProperty.IsOwnerWindow = true;
+    // }
+}
+
+void Window::_Native_UpdateWindowSize(Size newSize) {
+    _componentData.ComponentSize = _windowData.WindowSize = newSize;
+    _UpdateSwapBufferSize();
+}
+
+void    Window::_Native_UpdateWindowPosition(Point newPosition) { _windowData.WindowPosition = newPosition; }
+
+LRESULT Window::_Native_ComponentMessageProcessor(UINT uMsg, WPARAM wParam, LPARAM lParam, bool& isReturn) {
+
+    if (uMsg == WM_CLOSE) {
+        // if (WindowMap.size() == NULL) return NULL;
+
+        //// 因为第一个，即首个创建的窗口为 Owner 窗口。
+        // const auto isOwnerWindowExist = WindowMap.begin()->second->WindowProperty.IsOwnerWindow;
+
+        // if (!WindowProperty.IsOwnerWindow) {
+        //     if (isOwnerWindowExist) {
+        //         return NULL;
+        //     }
+        //     Component::_Native_ComponentMessageProcessor(WM_CLOSE, NULL, NULL, isReturn);
+        //     return NULL;
+        // }
+
+        ComponentBase::_Native_ComponentMessageProcessor(WM_CLOSE, NULL, NULL, isReturn);
+        WindowMap.erase(WindowHandle);
+
+        if (WindowMap.empty()) {
+            PostQuitMessage(NULL);
+        }
+
+        isReturn = true;
+        delete this;
+    }
+
+    if (uMsg == WM_PAINT) {
+        PAINTSTRUCT ps{};
+        BeginPaint(WindowHandle, &ps);
+
+        Rect targetRect{Utils::RectToGpRect(ps.rcPaint)};
+
+        // Todo. 优化绘制效率
+        // Before:
+        auto              coveredComponents = componentTree->TryHitTest(targetRect) | std::views::reverse | std::views::filter([](const auto& p) { return p != nullptr; });
+
+        Gdiplus::Graphics graphics{ps.hdc};
+
+        for (const auto& component : coveredComponents) {
+            const auto status = graphics.Save();
+            {
+                graphics.SetClip(Rect(component->ComponentPosition, component->ComponentSize));
+                component->_Native_TransformMessageProcessor(CM_PAINT, NULL, (LPARAM)&graphics);
+            }
+            graphics.Restore(status);
+        }
+
+        // ----
+
+        EndPaint(WindowHandle, &ps);
+        isReturn = true;
+    }
+
+    if (uMsg == WM_SIZE) {
+        _Native_UpdateWindowSize({GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)});
+        isReturn = true;
+    }
+
+    if (uMsg == WM_MOVE) {
+        _Native_UpdateWindowPosition({GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)});
+        isReturn = true;
+    }
+
+    if (uMsg == WM_MOUSEMOVE) {
+        static unordered_map<HWND, Component::ComponentBase*> lastComponentMap{};
+
+        // --
+        static ComponentBase* lastComponent = nullptr;
+
+        const Point           mousePoint    = {GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)};
+        const auto            nextComponent = componentTree->TryHitTest(mousePoint)[0];
+
+        if (lastComponent == nextComponent) {
+            return NULL;
+        }
+
+        if (lastComponent) {
+            const auto& posComponent = lastComponent->ComponentPosition;
+            const auto  ptMouse      = mousePoint - posComponent;
+
+            lastComponent->_Native_TransformMessageProcessor(CM_MOUSE_LEAVE, 0, (LPARAM)&ptMouse);
+        }
+
+        if (nextComponent) {
+            lastComponent = nextComponent;
+
+            const auto& posComponent = nextComponent->ComponentPosition;
+            const auto  ptMouse      = mousePoint - posComponent;
+
+            nextComponent->_Native_TransformMessageProcessor(CM_MOUSE_HOVER, 0, (LPARAM)&ptMouse);
+        }
+    }
+
+    return NULL;
 }
 
 //
-// CWindow::CWindow(vector<Utils::PropertyPair> pairs) : CBase(pairs) {
+// Window::Window(vector<Utils::PropertyPair> pairs) : Component(pairs) {
 //    SetPropertyIfNotExistByValue(L"titleText", L"Window."s);
 //    SetPropertyIfNotExistByValue(L"classText", L"UIEngine.Window"s);
 //    SetPropertyIfNotExistByValue(L"windowRect", make_any<Rect>(0, 0, 800, 600));
@@ -110,7 +222,7 @@ void CWindow::Initialize() {
 //    const auto& rect = GetPropertyTyped<Rect>(L"windowRect");
 //    ComponentSize    = Size({rect.Width, rect.Height});
 //
-//    const auto& pParent = GetPropertyTyped<CWindow*>(L"parentWindow");
+//    const auto& pParent = GetPropertyTyped<Window*>(L"parentWindow");
 //    if (pParent == nullptr) {
 //        SetPropertyByValue(L"isOwnerWindow", true);
 //    }
@@ -119,7 +231,7 @@ void CWindow::Initialize() {
 //    _renderSwapBuffer = make_unique<SwapBuffer>(_CreateWindow());
 //}
 //
-// void CWindow::_RegisterClass() {
+// void Window::_RegisterClass() {
 //    WNDCLASSEXW classInfo{};
 //    classInfo.cbSize        = sizeof WNDCLASSEXW;
 //    classInfo.hInstance     = Engine::hModuleInstance;
@@ -131,9 +243,9 @@ void CWindow::Initialize() {
 //    _windowClassInfo = classInfo;
 //}
 //
-// HWND CWindow::_CreateWindow() {
+// HWND Window::_CreateWindow() {
 //    const auto& rect    = GetPropertyTyped<Rect>(L"windowRect");
-//    const auto& pParent = GetPropertyTyped<CWindow*>(L"parentWindow");
+//    const auto& pParent = GetPropertyTyped<Window*>(L"parentWindow");
 //
 //    if (pParent == nullptr) {
 //        SetPropertyByValue(L"isOwnerWindow", true);
@@ -163,10 +275,10 @@ void CWindow::Initialize() {
 //    return hWnd;
 //}
 //
-// void CWindow::Render(Gdiplus::Graphics& grap) { CBase::Render(grap); }
+// void Window::Render(Gdiplus::Graphics& grap) { Component::Render(grap); }
 //
 // LRESULT
-// CWindow::_Native_ComponentMessageProcessor(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, bool& isReturn) {
+// Window::_Native_ComponentMessageProcessor(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, bool& isReturn) {
 //
 //    if (uMsg == WM_PAINT) {
 //        PAINTSTRUCT paintStruct{};
@@ -205,5 +317,5 @@ void CWindow::Initialize() {
 //        return NULL;
 //    }
 //
-//    return CBase::_Native_ComponentMessageProcessor(uMsg, wParam, lParam, isReturn);
+//    return Component::_Native_ComponentMessageProcessor(uMsg, wParam, lParam, isReturn);
 //}

@@ -18,159 +18,35 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include "pch.h"
-
 #include "engine.h"
 
 using namespace Engine;
 
 using namespace Logic;
-using namespace Component;
 
 unique_ptr<UIManager> UIManager::_selfInstance{};
 
-// UIManager Window Creation
-
-CWindow* UIManager::CreateCentralWindow(wstring titleText, wstring className, Size windowSize, CWindow* parentWindow) {
-    /*DEVMODEW devMode{.dmSize = sizeof DEVMODEW};
-    EnumDisplaySettingsW(nullptr, ENUM_CURRENT_SETTINGS, &devMode);*/
-    // HACK: 1.DPI感知；2.换用完善的居中判定
-    const auto screenWidth  = GetSystemMetrics(SM_CXSCREEN);
-    const auto screenHeight = GetSystemMetrics(SM_CYSCREEN);
-
-    Rect windowRect = {
-        ((int)screenWidth - windowSize.Width) / 2,
-        ((int)screenHeight - windowSize.Height) / 2,
-        windowSize.Width,
-        windowSize.Height
-    };
-
-    return CreateNormalWindow(titleText, className, windowRect, parentWindow);
-}
-
-CWindow* UIManager::CreateNormalWindow(wstring titleText, wstring className, Rect windowRect, CWindow* parentWindow) {
-    auto newWindow = new CWindow({
-        {L"titleText",    (titleText) },
-        {L"classText",    (className) },
-        {L"parentWindow", parentWindow}
-    });
-
-    newWindow->WindowRect = windowRect;
-
-    // Default is main for first main.
-
-    if (((_windowMap.at(newWindow->GetWindowHandle()) == nullptr) && _windowMap.size() == 1)
-        || _windowMap.size() == 0) {
-        newWindow->SetPropertyIfNotExistByValue(L"isOwnerWindow", new bool(true));
-    }
-
-    _InsertWindowMap(newWindow->GetWindowHandle(), newWindow);
-    return newWindow;
-}
-
-void UIManager::_InsertWindowMap(HWND hWnd, Component::CWindow* ptrWindow) {
-    CHECK_RESULT_BOOL(ptrWindow);
-
-    const auto selfWindowHandle = ptrWindow->GetWindowHandle();
-    if (ptrWindow->GetPropertyTyped<bool>(L"isOwnerWindow")) {
-        _mainWindowMap[selfWindowHandle] = ptrWindow;
-    }
-
-    _windowMap[selfWindowHandle] = ptrWindow;
-}
-
 // UIManager Message Processor
 
-static void OnMouseMove(HWND hCurrentWindow, LPARAM lParam) {
-    static unordered_map<HWND, CBase*> lastComponentMap{};
-
-    auto& currentWindow = UIManager::Get().GetWindowMap()[hCurrentWindow];
-    auto& lastComponent = lastComponentMap[hCurrentWindow];
-
-    const Point ptCurrMouse    = {GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)};
-    const auto  pNextComponent = currentWindow->GetComponentTree()->TryHitTest(ptCurrMouse)[0];
-
-    if (lastComponent == pNextComponent) {
-        return;
+void UIManager::InitializeWindow(vector<Component::Window*> children) {
+    for (auto& child : children) {
+        child->Initialize();
     }
 
-    if (lastComponent) {
-        const auto posComponent = lastComponent->ComponentPosition;
-        const auto ptMouse      = ptCurrMouse - posComponent;
-
-        lastComponent->_Native_TransformMessageProcessor(CM_MOUSE_LEAVE, 0, (LPARAM)&ptMouse);
-    }
-
-    if (pNextComponent) {
-        lastComponent = pNextComponent;
-
-        const auto posComponent = pNextComponent->ComponentPosition;
-        const auto ptMouse      = ptCurrMouse - posComponent;
-
-        pNextComponent->_Native_TransformMessageProcessor(CM_MOUSE_HOVER, 0, (LPARAM)&ptMouse);
-    }
+    _windowList = children;
 }
 
 LRESULT UIManager::WindowsMessageProcessor(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
-
     static auto& UIManager     = UIManager::Get();
-    auto&        currentWindow = *UIManager._windowMap[hWnd];
+    auto&        currentWindow = Component::Window::GetWindowMap()[hWnd];
     auto         bNoop         = false;
 
-    if (uMsg == WM_MOUSEMOVE) {
-        OnMouseMove(hWnd, lParam);
-    }
+    if (currentWindow != nullptr) {
+        const auto compResult = currentWindow->_Native_ComponentMessageProcessor(uMsg, wParam, lParam, bNoop);
 
-    if (uMsg == WM_CLOSE) {
-
-        auto& mainWindowMap = (UIManager._mainWindowMap);
-
-        auto windowResult = mainWindowMap.find(hWnd);
-        if (windowResult != mainWindowMap.end()) {
-
-            auto& windowMap  = UIManager.GetWindowMap();
-            auto& mainWindow = windowResult->second;
-
-            mainWindow->_Native_ComponentMessageProcessor(hWnd, uMsg, NULL, NULL, bNoop);
-
-            delete mainWindow;
-            mainWindow = nullptr;
-            windowMap.erase(hWnd);
-            mainWindowMap.erase(hWnd);
+        if (bNoop) {
+            return compResult;
         }
-
-        if (mainWindowMap.size() == 0) {
-            // UIManager.GetWindowMap().clear();
-
-            for (auto& window : (UIManager._windowMap)) {
-                if (window.second != nullptr) {
-                    window.second->_Native_ComponentMessageProcessor(hWnd, uMsg, NULL, NULL, bNoop);
-                    delete window.second;
-                }
-            }
-
-            PostQuitMessage(0);
-        }
-
-        return 0;
-    }
-
-    if (uMsg == WM_SIZE) {
-        if (&currentWindow) currentWindow._Native_SetWindowSize({GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)});
-
-        return 0;
-    }
-
-    if (uMsg == WM_MOVE) {
-        if (&currentWindow) currentWindow._Native_SetWindowPosition({GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)});
-
-        return 0;
-    }
-
-    // Todo, how?
-    if (uMsg == WM_PAINT) {
-        if (&currentWindow) currentWindow._Native_ComponentMessageProcessor(hWnd, uMsg, wParam, lParam, bNoop);
-
-        return 0;
     }
 
     if (uMsg == WM_ERASEBKGND) {

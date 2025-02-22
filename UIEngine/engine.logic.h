@@ -7,19 +7,19 @@
 namespace Engine {
 
 namespace Component {
-class CWindow;
-class CBase;
+class Window;
+class ComponentBase;
 } // namespace Component
 
 namespace Logic {
 
 namespace Defines {
 
-typedef Component::CBase*(TTryHittestCondition)(LPVOID,
-                                                Component::CBase*,
-                                                vector<Component::CBase*>&,
-                                                vector<Component::CBase*>&);
-typedef void(TTryHittestConditionNext)(LPVOID, TTryHittestCondition, vector<Component::CBase*>&, vector<Component::CBase*>&);
+typedef Component::ComponentBase*(TTryHittestCondition)(LPVOID,
+                                                Component::ComponentBase*,
+                                                Component::ComponentBase*,
+                                                vector<Component::ComponentBase*>&);
+typedef void(TTryHittestConditionNext)(LPVOID, TTryHittestCondition, vector<Component::ComponentBase*>&, vector<Component::ComponentBase*>&);
 
 } // namespace Defines
 
@@ -27,15 +27,15 @@ using namespace Defines;
 
 class UIENGINE_API CComponentTree final {
 public:
-    CComponentTree(Component::CWindow* pRootWindow) : _pRootWindow(pRootWindow) {}
+    CComponentTree(Component::Window* pRootWindow) : _pRootWindow(pRootWindow) {}
 
-    Component::CWindow*       GetRootWindow() const { return _pRootWindow; };
-    vector<Component::CBase*> TryHitTest(Rect);
-    vector<Component::CBase*> TryHitTest(Point);
-    vector<Component::CBase*> TryHitTestWithCondition(TTryHittestCondition, LPVOID lParam);
+    Component::Window*       GetRootWindow() const { return _pRootWindow; };
+    vector<Component::ComponentBase*> TryHitTest(Rect);
+    vector<Component::ComponentBase*> TryHitTest(Point);
+    vector<Component::ComponentBase*> TryHitTestWithCondition(TTryHittestCondition, LPVOID lParam);
 
 private:
-    Component::CWindow* _pRootWindow{nullptr};
+    Component::Window* _pRootWindow{nullptr};
 };
 } // namespace Logic
 } // namespace Engine

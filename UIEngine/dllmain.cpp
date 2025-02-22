@@ -23,15 +23,15 @@
 #include "engine.h"
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ulCallSource, LPVOID lpReserved) {
-  DisableThreadLibraryCalls(hModule);
+    DisableThreadLibraryCalls(hModule);
 
-  switch (ulCallSource) {
-  case DLL_PROCESS_ATTACH:
-  case DLL_THREAD_ATTACH:
-  case DLL_THREAD_DETACH:
-  case DLL_PROCESS_DETACH:
-    break;
-  }
+    switch (ulCallSource) {
+    case DLL_PROCESS_ATTACH:
+    case DLL_THREAD_ATTACH:
+    case DLL_THREAD_DETACH:
+    case DLL_PROCESS_DETACH:
+        break;
+    }
 
-  return TRUE;
+    return TRUE;
 }
