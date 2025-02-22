@@ -20,9 +20,10 @@
 #include "pch.h"
 #include "../engine.h"
 
-using Engine::Render::SwapBuffer;
+using namespace Engine::Utils::Flags;
+using namespace Engine::Utils::Graph;
 using namespace Engine::Logic;
-using namespace Engine::Component;
+using namespace Engine::Components;
 
 unordered_map<HWND, Window*> Window::WindowMap{};
 
@@ -37,21 +38,16 @@ void Window::Initialize() {
 
     {
         WNDCLASSEX classInfo{NULL};
-
         classInfo.cbSize        = sizeof WNDCLASSEX;
-        classInfo.hInstance     = UIManager::Get().GetProcessInstance();
-        classInfo.lpfnWndProc   = &UIManager::Get().WindowsMessageProcessor;
+        classInfo.hInstance     = Engine::ProcessInstance;
+        classInfo.lpfnWndProc   = &UIManager::WindowsMessageProcessor;
         classInfo.lpszClassName = _windowData.WindowClassText.c_str();
 
-        if (!RegisterClassEx(&classInfo)) {
-            // Maybe warn?
-        }
-
+        RegisterClassEx(&classInfo);
         _windowData.WindowClassInformation = classInfo;
     }
 
     {
-
         Rect  actualRect  = Rect{WindowPosition, WindowSize};
         DWORD actualStyle = NULL;
 
@@ -59,14 +55,14 @@ void Window::Initialize() {
             actualStyle |= WS_VISIBLE;
         }
 
-        if (Utils::HasFlag(_windowData.FrameFlag, WindowFrameFlag::Central)) {
+        if (HasFlag(_windowData.FrameFlag, WindowFrameFlags::Central)) {
             const auto screenWidth  = GetSystemMetrics(SM_CXSCREEN);
             const auto screenHeight = GetSystemMetrics(SM_CYSCREEN);
 
             actualRect = {((int)screenWidth - WindowSize.Width) / 2, ((int)screenHeight - WindowSize.Height) / 2, WindowSize.Width, WindowSize.Height};
         }
 
-        if (Utils::HasFlag(_windowData.FrameFlag, WindowFrameFlag::Borderless)) {
+        if (HasFlag(_windowData.FrameFlag, WindowFrameFlags::Borderless)) {
             actualStyle |= WS_POPUP;
         } else {
             actualStyle |= WS_OVERLAPPEDWINDOW;
@@ -83,7 +79,7 @@ void Window::Initialize() {
             actualRect.Height,
             nullptr,
             nullptr,
-            UIManager::Get().GetProcessInstance(),
+            Engine::ProcessInstance,
             nullptr
         );
 
@@ -92,12 +88,11 @@ void Window::Initialize() {
         }
     }
 
-    {
-        _swapBuffer   = make_unique<Render::SwapBuffer>(WindowHandle);
-        componentTree = make_unique<Logic::CComponentTree>(this);
-    }
 
+    _swapBuffer             = make_unique<SwapBuffer>(WindowHandle);
     _initialized            = true;
+
+    componentTree           = make_unique<CComponentTree>(this);
     WindowMap[WindowHandle] = this;
 
     // if (WindowMap.size() == 1) {
@@ -128,7 +123,7 @@ LRESULT Window::_Native_ComponentMessageProcessor(UINT uMsg, WPARAM wParam, LPAR
         //     return NULL;
         // }
 
-        ComponentBase::_Native_ComponentMessageProcessor(WM_CLOSE, NULL, NULL, isReturn);
+        Component::_Native_ComponentMessageProcessor(WM_CLOSE, NULL, NULL, isReturn);
         WindowMap.erase(WindowHandle);
 
         if (WindowMap.empty()) {
@@ -140,29 +135,30 @@ LRESULT Window::_Native_ComponentMessageProcessor(UINT uMsg, WPARAM wParam, LPAR
     }
 
     if (uMsg == WM_PAINT) {
-        PAINTSTRUCT ps{};
-        BeginPaint(WindowHandle, &ps);
+        PAINTSTRUCT paintStruct{};
+        BeginPaint(WindowHandle, &paintStruct);
 
-        Rect targetRect{Utils::RectToGpRect(ps.rcPaint)};
+        Rect targetRect{RectToGpRect(paintStruct.rcPaint)};
+        auto coveredComponents = componentTree->TryHitTest(targetRect) | std::views::reverse | std::views::filter([](const auto& p) { return p != nullptr; });
 
-        // Todo. 优化绘制效率
-        // Before:
-        auto              coveredComponents = componentTree->TryHitTest(targetRect) | std::views::reverse | std::views::filter([](const auto& p) { return p != nullptr; });
-
-        Gdiplus::Graphics graphics{ps.hdc};
+        // -
+        Gdiplus::Graphics graphics{_swapBuffer->GetDrawContext()};
 
         for (const auto& component : coveredComponents) {
             const auto status = graphics.Save();
             {
                 graphics.SetClip(Rect(component->ComponentPosition, component->ComponentSize));
-                component->_Native_TransformMessageProcessor(CM_PAINT, NULL, (LPARAM)&graphics);
+                component->_Native_TransformMessageProcessor(ComponentMessages::Paint, NULL, (LPARAM)&graphics);
             }
             graphics.Restore(status);
         }
 
-        // ----
-
-        EndPaint(WindowHandle, &ps);
+        if (HasFlag(FrameFlags, WindowFrameFlags::Borderless)) {
+            _swapBuffer->Present();
+        } else {
+            _swapBuffer->Present(paintStruct.hdc);
+        }
+        EndPaint(WindowHandle, &paintStruct);
         isReturn = true;
     }
 
@@ -177,13 +173,13 @@ LRESULT Window::_Native_ComponentMessageProcessor(UINT uMsg, WPARAM wParam, LPAR
     }
 
     if (uMsg == WM_MOUSEMOVE) {
-        static unordered_map<HWND, Component::ComponentBase*> lastComponentMap{};
+        static unordered_map<HWND, Component*> lastComponentMap{};
 
         // --
-        static ComponentBase* lastComponent = nullptr;
+        static Component* lastComponent = nullptr;
 
-        const Point           mousePoint    = {GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)};
-        const auto            nextComponent = componentTree->TryHitTest(mousePoint)[0];
+        const Point       mousePoint    = {GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)};
+        const auto        nextComponent = componentTree->TryHitTest(mousePoint)[0];
 
         if (lastComponent == nextComponent) {
             return NULL;
@@ -193,7 +189,7 @@ LRESULT Window::_Native_ComponentMessageProcessor(UINT uMsg, WPARAM wParam, LPAR
             const auto& posComponent = lastComponent->ComponentPosition;
             const auto  ptMouse      = mousePoint - posComponent;
 
-            lastComponent->_Native_TransformMessageProcessor(CM_MOUSE_LEAVE, 0, (LPARAM)&ptMouse);
+            lastComponent->_Native_TransformMessageProcessor(ComponentMessages::MouseLeave, 0, (LPARAM)&ptMouse);
         }
 
         if (nextComponent) {
@@ -202,7 +198,7 @@ LRESULT Window::_Native_ComponentMessageProcessor(UINT uMsg, WPARAM wParam, LPAR
             const auto& posComponent = nextComponent->ComponentPosition;
             const auto  ptMouse      = mousePoint - posComponent;
 
-            nextComponent->_Native_TransformMessageProcessor(CM_MOUSE_HOVER, 0, (LPARAM)&ptMouse);
+            nextComponent->_Native_TransformMessageProcessor(ComponentMessages::MouseHover, 0, (LPARAM)&ptMouse);
         }
     }
 
@@ -234,7 +230,7 @@ LRESULT Window::_Native_ComponentMessageProcessor(UINT uMsg, WPARAM wParam, LPAR
 // void Window::_RegisterClass() {
 //    WNDCLASSEXW classInfo{};
 //    classInfo.cbSize        = sizeof WNDCLASSEXW;
-//    classInfo.hInstance     = Engine::hModuleInstance;
+//    classInfo.hInstance     = Engine::ProcessInstance;
 //    classInfo.lpfnWndProc   = &UIManager::WindowsMessageProcessor;
 //    classInfo.lpszClassName = GetPropertyTyped<wstring>(L"classText").c_str();
 //
@@ -286,7 +282,7 @@ LRESULT Window::_Native_ComponentMessageProcessor(UINT uMsg, WPARAM wParam, LPAR
 //        const auto& paintRect = paintStruct.rcPaint;
 //
 //        auto&             swapBuffer = GetWindowSwapBuffer();
-//        Gdiplus::Graphics graphics{swapBuffer.GetRenderableDC()};
+//        Gdiplus::Graphics graphics{swapBuffer.GetDrawContext()};
 //
 //        const Gdiplus::Rect renderableRect{
 //            paintRect.left,

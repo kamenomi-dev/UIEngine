@@ -20,11 +20,11 @@
 #include "pch.h"
 #include "../engine.h"
 
-using namespace Engine::Component;
+using namespace Engine::Components;
 
-// ComponentBase Message
+// Component Message
 
-void ComponentBase::Render(Gdiplus::Graphics& graphics) {
+void Component::Render(Gdiplus::Graphics& graphics) {
     static unordered_map<void*, Gdiplus::Color> map{};
 
     if (map.find(this) == map.end()) {
@@ -34,37 +34,25 @@ void ComponentBase::Render(Gdiplus::Graphics& graphics) {
     graphics.Clear(map[this]);
 }
 
-LRESULT ComponentBase::_Native_ComponentMessageProcessor(UINT uMsg, WPARAM wParam, LPARAM lParam, bool& isReturn) {
+LRESULT Component::_Native_ComponentMessageProcessor(UINT uMsg, WPARAM wParam, LPARAM lParam, bool& isReturn) {
 
     if (uMsg == WM_CLOSE) {
 
         auto current = NodeData.FirstChild;
         while (current != nullptr) {
-            current->_Native_TransformMessageProcessor(CM_DESTROY, NULL, NULL);
+            current->_Native_TransformMessageProcessor(ComponentMessages::Destroy, NULL, NULL);
 
             current = current->NodeData.Next;
         }
 
-        _Native_TransformMessageProcessor(CM_DESTROY, NULL, NULL);
+        _Native_TransformMessageProcessor(ComponentMessages::Destroy, NULL, NULL);
     }
 
     return 0;
 }
 
-void ComponentBase::_Native_TransformMessageProcessor(UINT uMsg, WPARAM wParam, LPARAM lParam) {
-    if (uMsg == CM_DESTROY) {
-        (void)cos(1);
-    }
-
-    if (uMsg == CM_MOUSE_HOVER) {
-        (void)cos(1); // FIXME: ???
-    }
-
-    if (uMsg == CM_MOUSE_LEAVE) {
-        (void)cos(1);
-    }
-
-    if (uMsg == CM_PAINT) {
+void Component::_Native_TransformMessageProcessor(ComponentMessages uMsg, WPARAM wParam, LPARAM lParam) {
+    if (uMsg == ComponentMessages::Paint) {
         if (Visible) {
             Render(*(Gdiplus::Graphics*)lParam);
         }

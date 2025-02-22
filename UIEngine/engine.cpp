@@ -20,32 +20,35 @@
 #include "pch.h"
 #include "engine.h"
 
-UINT_PTR          Engine::uGdiToken{};
-HINSTANCE         Engine::hModuleInstance{};
+UINT_PTR          Engine::GdiplusToken{};
+HINSTANCE         Engine::ProcessInstance{};
 
 UIENGINE_API void Engine::Initialize(HINSTANCE hInstance) {
-    hModuleInstance = hInstance;
+    ProcessInstance = hInstance;
 
-    if (!uGdiToken) {
-        Engine::InitializeEngineWorker();
+    if (GdiplusToken) {
+        return;
     }
 
-    return;
-}
-
-UIENGINE_API void Engine::Uninitialize() {
-    UninitializeEngineWorker();
-    return;
-}
-
-void Engine::InitializeEngineWorker() {
     const Gdiplus::GdiplusStartupInput startupInput{};
-    CHECK_RESULT(Gdiplus::GdiplusStartup(&uGdiToken, &startupInput, nullptr));
+    CHECK_RESULT(Gdiplus::GdiplusStartup(&GdiplusToken, &startupInput, nullptr));
+
+    UIManager::Initialize(hInstance);
+    return;
 }
 
-void Engine::UninitializeEngineWorker() {
-    if (uGdiToken) {
-        Gdiplus::GdiplusShutdown(uGdiToken);
-        uGdiToken = 0u;
+UIENGINE_API int Engine::StartMessageLoop() {
+    MSG msgStruct{};
+
+    while (GetMessageW(&msgStruct, nullptr, 0, 0)) {
+        TranslateMessage(&msgStruct);
+        DispatchMessageW(&msgStruct);
     }
+
+    if (GdiplusToken) {
+        Gdiplus::GdiplusShutdown(GdiplusToken);
+        GdiplusToken = 0u;
+    }
+
+    return (int)msgStruct.wParam;
 }

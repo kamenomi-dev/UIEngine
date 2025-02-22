@@ -3,18 +3,16 @@
 #ifndef __COMPONENT_BASE_H__
 #define __COMPONENT_BASE_H__
 
-namespace Engine::Component {
+namespace Engine::Components {
 
-class ComponentBase;
-
-enum class UIENGINE_API ComponentStatusFlags : UINT { None = FLAG_INDEX(0), Visible = FLAG_INDEX(1), Disable = FLAG_INDEX(2) };
+class Component;
 
 struct UIENGINE_API     NodeDataType {
-    ComponentBase* Parent;
-    ComponentBase* Prev;
-    ComponentBase* Next;
-    ComponentBase* FirstChild;
-    ComponentBase* LastChild;
+    Component* Parent;
+    Component* Prev;
+    Component* Next;
+    Component* FirstChild;
+    Component* LastChild;
 
     NodeDataType() {
         Parent     = nullptr;
@@ -25,7 +23,7 @@ struct UIENGINE_API     NodeDataType {
     }
 };
 
-struct UIENGINE_API CommonComponentDataType {
+struct UIENGINE_API ComponentDataType {
     NodeDataType Node{};
     wstring      ComponentID{};
 
@@ -34,16 +32,16 @@ struct UIENGINE_API CommonComponentDataType {
     Point        ComponentPosition{};
 };
 
-class UIENGINE_API ComponentBase {
+class UIENGINE_API Component {
   private:
     HWND _nativeWindow{nullptr};
 
   public:
     friend class Window;
 
-    ComponentBase() { _componentData.ComponentID = L"Component.Base"; }
-    ~ComponentBase() {
-        ComponentBase::SplitComponentRelation(this);
+    Component() { _componentData.ComponentID = L"Component.Base"; }
+    ~Component() {
+        Component::SplitComponentRelation(this);
 
         auto current = NodeData.FirstChild;
         while (current != nullptr) {
@@ -56,9 +54,9 @@ class UIENGINE_API ComponentBase {
 
   public:
     virtual void Initialize() {};
-    void         SetStatusFlag(std::initializer_list<ComponentStatusFlags> flags) { Utils::CombineFlag(_componentData.StatusFlag, flags); }
-    void         InsertComponentChild(ComponentBase* child) {
-        ComponentBase::SplitComponentRelation(child);
+    void         SetStatusFlag(std::initializer_list<ComponentStatusFlags> flags) { Utils::Flags::CombineFlag(_componentData.StatusFlag, flags); }
+    void         InsertComponentChild(Component* child) {
+        Component::SplitComponentRelation(child);
 
         child->_componentData.Node.Parent = this;
 
@@ -83,10 +81,10 @@ class UIENGINE_API ComponentBase {
 
     virtual void       Render(Gdiplus::Graphics&);
     virtual LRESULT    _Native_ComponentMessageProcessor(UINT, WPARAM, LPARAM, bool&);
-    virtual void       _Native_TransformMessageProcessor(UINT, WPARAM, LPARAM);
+    virtual void       _Native_TransformMessageProcessor(ComponentMessages, WPARAM, LPARAM);
 
   public:
-    static void SplitComponentRelation(_Inout_ ComponentBase* comp) {
+    static void SplitComponentRelation(_Inout_ Component* comp) {
         if (comp->NodeData.Parent != nullptr) {
             auto parent = comp->NodeData.Parent;
 
@@ -107,7 +105,7 @@ class UIENGINE_API ComponentBase {
         comp->_componentData.Node.Prev = comp->_componentData.Node.Next = nullptr;
     }
 
-    static void DestroyComponentAndChildren(_In_ ComponentBase* comp) {
+    static void DestroyComponentAndChildren(_In_ Component* comp) {
         delete comp;
 
         /*
@@ -139,19 +137,19 @@ class UIENGINE_API ComponentBase {
      */
 
   public:
-    CommonComponentDataType _componentData{};
+    ComponentDataType _componentData{};
 
   public:
-    const CommonComponentDataType& GetBaseData() const { return _componentData; }
-    void                           SetBaseData(_In_ const CommonComponentDataType& data) { _componentData = data; }
+    const ComponentDataType& GetBaseData() const { return _componentData; }
+    void                     SetBaseData(_In_ const ComponentDataType& data) { _componentData = data; }
 
-    const NodeDataType&            GetNodeData() const { return _componentData.Node; }
-    void                           SetNodeData(_In_ const NodeDataType& data) { _componentData.Node = data; }
+    const NodeDataType&      GetNodeData() const { return _componentData.Node; }
+    void                     SetNodeData(_In_ const NodeDataType& data) { _componentData.Node = data; }
 
-    const UINT&                    GetStatusFlags() const { return _componentData.StatusFlag; }
+    const UINT&              GetStatusFlags() const { return _componentData.StatusFlag; }
 
-    bool                           IsVisible() const { return Utils::HasFlag(StatusFlags, ComponentStatusFlags::Visible); };
-    void                           SetVisible(_In_ const bool status) {
+    bool                     IsVisible() const { return Utils::Flags::HasFlag(StatusFlags, ComponentStatusFlags::Visible); };
+    void                     SetVisible(_In_ const bool status) {
         if (status) {
             _componentData.StatusFlag |= (UINT)ComponentStatusFlags::Visible;
             return;
@@ -160,7 +158,7 @@ class UIENGINE_API ComponentBase {
         _componentData.StatusFlag &= ~(UINT)ComponentStatusFlags::Visible;
     };
 
-    bool IsDisabled() const { return Utils::HasFlag(StatusFlags, ComponentStatusFlags::Visible); };
+    bool IsDisabled() const { return Utils::Flags::HasFlag(StatusFlags, ComponentStatusFlags::Visible); };
     void SetDisabled(_In_ const bool status) {
         if (status) {
             _componentData.StatusFlag |= (UINT)ComponentStatusFlags::Disable;
@@ -177,7 +175,7 @@ class UIENGINE_API ComponentBase {
     void         SetComponentPosition(const Point& pos) { _componentData.ComponentPosition = pos; }
 
   public:
-    COMPONENT_PROPERTY(GetBaseData, SetBaseData) CommonComponentDataType BaseData;
+    COMPONENT_PROPERTY(GetBaseData, SetBaseData) ComponentDataType       BaseData;
     COMPONENT_PROPERTY(GetNodeData, SetNodeData) NodeDataType            NodeData;
     COMPONENT_PROPERTY_GETTER_ONLY(GetStatusFlags) UINT                  StatusFlags;
 
@@ -187,6 +185,6 @@ class UIENGINE_API ComponentBase {
     COMPONENT_PROPERTY(GetComponentSize, SetComponentSize) Size          ComponentSize;
     COMPONENT_PROPERTY(GetComponentPosition, SetComponentPosition) Point ComponentPosition;
 };
-} // namespace Engine::Component
+} // namespace Engine::Components
 
 #endif // !__COMPONENT_BASE_H__

@@ -21,11 +21,11 @@
 #include "engine.h"
 
 using namespace Engine::Logic;
-using namespace Engine::Component;
+using namespace Engine::Components;
 
 // Compenont Tree - -  Hittest Implement
 
-static void __TryHitTestConditionNext(LPVOID lParam, TTryHittestCondition&& conditionFunc, ComponentBase* currComp, vector<ComponentBase*>& resultComponents) {
+static void __TryHitTestConditionNext(LPVOID lParam, TTryHittestCondition&& conditionFunc, Component* currComp, vector<Component*>& resultComponents) {
 
     auto current = currComp;
 
@@ -41,7 +41,7 @@ static void __TryHitTestConditionNext(LPVOID lParam, TTryHittestCondition&& cond
     }
 };
 
-static ComponentBase* __TryHitTestFromRect(LPVOID pTargetRect, ComponentBase* currComp, ComponentBase* childCompBegin, vector<ComponentBase*>& resultComponents) {
+static Component* __TryHitTestFromRect(LPVOID pTargetRect, Component* currComp, Component* childCompBegin, vector<Component*>& resultComponents) {
     const auto& targetRect  = *((Rect*)pTargetRect);
     const auto& currentRect = Rect(currComp->ComponentPosition, currComp->ComponentSize);
 
@@ -54,7 +54,7 @@ static ComponentBase* __TryHitTestFromRect(LPVOID pTargetRect, ComponentBase* cu
     return nullptr;
 }
 
-static ComponentBase* __TryHitTestFromPoint(LPVOID pTargetPoint, ComponentBase* currComp, ComponentBase* childCompBegin, vector<ComponentBase*>& resultComponents) {
+static Component* __TryHitTestFromPoint(LPVOID pTargetPoint, Component* currComp, Component* childCompBegin, vector<Component*>& resultComponents) {
     const auto& targetPoint = *(Point*)pTargetPoint;
     const auto& currentRect = Rect(currComp->ComponentPosition, currComp->ComponentSize);
 
@@ -67,12 +67,12 @@ static ComponentBase* __TryHitTestFromPoint(LPVOID pTargetPoint, ComponentBase* 
     return nullptr;
 }
 
-vector<ComponentBase*> CComponentTree::TryHitTest(Rect targetRect) { return TryHitTestWithCondition(__TryHitTestFromRect, &targetRect); }
+vector<Component*> CComponentTree::TryHitTest(Rect targetRect) { return TryHitTestWithCondition(__TryHitTestFromRect, &targetRect); }
 
-vector<ComponentBase*> CComponentTree::TryHitTest(Point targetPoint) { return TryHitTestWithCondition(__TryHitTestFromPoint, &targetPoint); }
+vector<Component*> CComponentTree::TryHitTest(Point targetPoint) { return TryHitTestWithCondition(__TryHitTestFromPoint, &targetPoint); }
 
-vector<ComponentBase*> CComponentTree::TryHitTestWithCondition(TTryHittestCondition conditionFunc, LPVOID lParam) {
-    vector<ComponentBase*> resultComps{};
+vector<Component*> CComponentTree::TryHitTestWithCondition(TTryHittestCondition conditionFunc, LPVOID lParam) {
+    vector<Component*> resultComps{};
 
     resultComps.push_back(conditionFunc(lParam, _pRootWindow, _pRootWindow->NodeData.FirstChild, resultComps));
 

@@ -1,33 +1,22 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 #pragma once
+
 #ifndef __ENGINE_UIMANAGER_H__
 #define __ENGINE_UIMANAGER_H__
 
 namespace Engine {
 
 class UIENGINE_API UIManager final {
-public:
-    [[nodiscard]] HINSTANCE GetProcessInstance() const { return _processInstance; };
-
-    void InitializeWindow(vector<Component::Window*>);
-
+  public:
+    void           InitializeWindow(vector<Components::Window*>);
     static LRESULT WindowsMessageProcessor(HWND, UINT, WPARAM, LPARAM);
-    int            StartMessageLoop() {
-        MSG msgStruct{};
 
-        while (GetMessageW(&msgStruct, nullptr, 0, 0)) {
-            TranslateMessage(&msgStruct);
-            DispatchMessageW(&msgStruct);
-        }
+  private:
+    vector<Components::Window*> _windowList;
 
-        return (int)msgStruct.wParam; // Todo, does it will lost?
-    };
+    // Single instance.
 
-private:
-    HINSTANCE                   _processInstance{};
-    vector<Component::Window*> _windowList;
-
-public:
+  public:
     static auto& Initialize(HINSTANCE instance) {
         if (_selfInstance) {
             throw runtime_error("Error! UIManager has initialized already! ");
@@ -43,11 +32,11 @@ public:
         return *_selfInstance;
     };
 
-    ~UIManager() { Engine::Uninitialize(); };
+    ~UIManager()                           = default;
     UIManager(const UIManager&)            = delete;
     UIManager& operator=(const UIManager&) = delete;
 
-private:
+  private:
     static unique_ptr<UIManager> _selfInstance;
 
     friend class unique_ptr<UIManager>;
@@ -55,9 +44,6 @@ private:
         if (_selfInstance) {
             throw runtime_error("Error! UIManager has initialized already! ");
         }
-
-        _processInstance = hInstance;
-        Engine::Initialize(hInstance);
     };
 };
 

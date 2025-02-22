@@ -1,9 +1,10 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 #pragma once
 
-#ifndef __ENGINE_UTIL_H__
+#ifndef __ENGINE_UTILS_FLAGS_H__
+#define __ENGINE_UTILS_FLAGS_H__
 
-namespace Engine::Utils {
+namespace Engine::Utils::Flags {
 
 template <typename Ty>
 inline [[nodiscard]] bool HasFlag(_In_ unsigned int flags, _In_ Ty curr) {
@@ -17,8 +18,6 @@ inline [[nodiscard]] void CombineFlag(_Inout_ unsigned int& outFlag, _In_ std::i
     }
 }
 
-inline [[nodiscard]] Rect RectToGpRect(const RECT& rc) { return Rect(rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top); }
+} // namespace Engine::Utils::Flags
 
-} // namespace Engine::Utils
-
-#endif // !__ENGINE_UTIL_H__
+#endif // !__ENGINE_UTILS_FLAGS_H__

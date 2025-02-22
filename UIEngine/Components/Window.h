@@ -4,12 +4,10 @@
 #ifndef __COMPONENT_WINDOW_H__
 #define __COMPONENT_WINDOW_H__
 
-namespace Engine::Component {
+namespace Engine::Components {
 
-enum class UIENGINE_API WindowFrameFlag : UINT { None = FLAG_INDEX(0), Central = FLAG_INDEX(1), Borderless = FLAG_INDEX(2) };
-
-struct UIENGINE_API     WindowDataType {
-    UINT       FrameFlag{(UINT)WindowFrameFlag::None};
+struct UIENGINE_API WindowDataType {
+    UINT       FrameFlag{(UINT)WindowFrameFlags::None};
 
     HWND       WindowHandle{nullptr};
     bool       IsOwnerWindow{false}; // Owner window is unique to all of windows.
@@ -20,15 +18,16 @@ struct UIENGINE_API     WindowDataType {
     WNDCLASSEX WindowClassInformation{};
 };
 
-class UIENGINE_API Window : public ComponentBase {
+class UIENGINE_API Window : public Component {
   public:
-    Window() : ComponentBase() {
+    Window() : Component() {
         _componentData.ComponentSize     = {800, 600};
         _componentData.ComponentPosition = {0, 0};
     }
     ~Window() {
         if (!_initialized) {
-            return;
+            OutputDebugStringW(L"Window class was incorrectly initialized again. ");
+            abort();
         }
 
         DestroyWindow(WindowHandle);
@@ -40,7 +39,7 @@ class UIENGINE_API Window : public ComponentBase {
     }
 
     void    Initialize();
-    void    SetFrameFlag(std::initializer_list<WindowFrameFlag> flags) { Utils::CombineFlag(_windowData.FrameFlag, flags); }
+    void    SetFrameFlag(std::initializer_list<WindowFrameFlags> flags) { Utils::Flags::CombineFlag(_windowData.FrameFlag, flags); }
 
     void    _Native_UpdateWindowSize(Size);
     void    _Native_UpdateWindowPosition(Point);
@@ -48,11 +47,11 @@ class UIENGINE_API Window : public ComponentBase {
 
   private:
     void _UpdateSwapBufferSize() {
+        static Size lastSize{WindowSize};
+
         if (not _swapBuffer) {
             return;
         }
-
-        static Size lastSize{WindowSize};
 
         if (lastSize.Equals(WindowSize)) {
             return;
@@ -65,13 +64,13 @@ class UIENGINE_API Window : public ComponentBase {
   public:
     static unordered_map<HWND, Window*>& GetWindowMap() { return WindowMap; }
 
-    unique_ptr<Logic::CComponentTree>    componentTree; // 组件树类，有命中测试的方法
+    unique_ptr<Logic::CComponentTree>    componentTree;
 
   private:
-    bool                                _initialized{false};
-    unique_ptr<Render::SwapBuffer>      _swapBuffer;
+    bool                                 _initialized{false};
+    unique_ptr<Utils::Graph::SwapBuffer> _swapBuffer;
 
-    static unordered_map<HWND, Window*> WindowMap;
+    static unordered_map<HWND, Window*>  WindowMap;
 
     /*
      *
@@ -149,7 +148,7 @@ class UIENGINE_API Window : public ComponentBase {
     COMPONENT_PROPERTY_GETTER_ONLY(GetComponentPosition) Point         ComponentPosition;
 };
 
-} // namespace Engine::Component
+} // namespace Engine::Components
 
 #endif // !__COMPONENT_WINDOW_H__
 

@@ -18,16 +18,11 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include "pch.h"
-#include "engine.h"
+#include "../engine.h"
 
-using namespace Engine::Render;
+using namespace Engine::Utils::Graph;
 
-/*
- *  Class.
- *  SwapBuffer
- */
-
-HDC  SwapBuffer::GetRenderableDC() const { return _swapDC; }
+HDC  SwapBuffer::GetDrawContext() const { return _swapDC; }
 
 bool SwapBuffer::Present() { return BitBlt(_targetWindowDC, 0, 0, _targetWindowSize.cx, _targetWindowSize.cy, _swapDC, 0, 0, SRCCOPY); }
 

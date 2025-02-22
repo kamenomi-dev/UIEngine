@@ -19,32 +19,28 @@
 #define CHECK_RESULT_BOOL(ret) ret;
 #endif
 
-#define FLAG_INDEX(idx) 1u << idx
-#define FLAG_MATCH(flags, flag) ((UINT)flags & (UINT)flag) == 1
+#define FLAG_INDEX(idx)                        1u << idx
 
 #define COMPONENT_PROPERTY(Getter, Setter)     __declspec(property(get = Getter, put = Setter))
 #define COMPONENT_PROPERTY_GETTER_ONLY(Getter) __declspec(property(get = Getter))
 #define COMPONENT_PROPERTY_SETTER_ONLY(Setter) __declspec(property(put = Setter))
 
 namespace Engine {
-extern UINT_PTR  uGdiToken;
-extern HINSTANCE hModuleInstance;
+extern UINT_PTR          GdiplusToken;
+extern HINSTANCE         ProcessInstance;
 
 UIENGINE_API extern void Initialize(HINSTANCE hInstance);
-UIENGINE_API extern void Uninitialize();
-
-// native
-void InitializeEngineWorker();
-void UninitializeEngineWorker();
+UIENGINE_API extern int  StartMessageLoop();
 } // namespace Engine
 
 #include "./engine.enum.h"
 #include "./engine.logic.h"
-#include "./engine.render.h"
-#include "./engine.util.h"
+#include "./Utils/Blur.h"
+#include "./Utils/Flags.h"
+#include "./Utils/Graph.h"
 
-#include "./components/component.base.h"
-#include "./components/component.window.h"
+#include "./Components/Component.h"
+#include "./Components/Window.h"
 
 #include "./engine.uimanager.h"
 

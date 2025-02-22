@@ -26,9 +26,8 @@ using namespace Logic;
 
 unique_ptr<UIManager> UIManager::_selfInstance{};
 
-// UIManager Message Processor
-
-void UIManager::InitializeWindow(vector<Component::Window*> children) {
+// @brief Initializes window with its children.
+void UIManager::InitializeWindow(vector<Components::Window*> children) {
     for (auto& child : children) {
         child->Initialize();
     }
@@ -38,7 +37,7 @@ void UIManager::InitializeWindow(vector<Component::Window*> children) {
 
 LRESULT UIManager::WindowsMessageProcessor(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     static auto& UIManager     = UIManager::Get();
-    auto&        currentWindow = Component::Window::GetWindowMap()[hWnd];
+    auto&        currentWindow = Components::Window::GetWindowMap()[hWnd];
     auto         bNoop         = false;
 
     if (currentWindow != nullptr) {
