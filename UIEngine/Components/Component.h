@@ -7,27 +7,19 @@ namespace Engine::Components {
 
 class Component;
 
-struct UIENGINE_API     NodeDataType {
-    Component* Parent;
-    Component* Prev;
-    Component* Next;
-    Component* FirstChild;
-    Component* LastChild;
-
-    NodeDataType() {
-        Parent     = nullptr;
-        Prev       = nullptr;
-        Next       = nullptr;
-        FirstChild = nullptr;
-        LastChild  = nullptr;
-    }
+struct UIENGINE_API NodeDataType {
+    Component* Parent{};
+    Component* Prev{};
+    Component* Next{};
+    Component* FirstChild{};
+    Component* LastChild{};
 };
 
 struct UIENGINE_API ComponentDataType {
     NodeDataType Node{};
     wstring      ComponentID{};
 
-    UINT         StatusFlag{(UINT)ComponentStatusFlags::None};
+    CompStatus   StatusFlag{CompStatus::None};
     Size         ComponentSize{};
     Point        ComponentPosition{};
 };
@@ -54,7 +46,7 @@ class UIENGINE_API Component {
 
   public:
     virtual void Initialize() {};
-    void         SetStatusFlag(std::initializer_list<ComponentStatusFlags> flags) { Utils::Flags::CombineFlag(_componentData.StatusFlag, flags); }
+    void         SetStatusFlag(CompStatus flags) { _componentData.StatusFlag = flags; }
     void         InsertComponentChild(Component* child) {
         Component::SplitComponentRelation(child);
 
@@ -140,44 +132,44 @@ class UIENGINE_API Component {
     ComponentDataType _componentData{};
 
   public:
-    const ComponentDataType& GetBaseData() const { return _componentData; }
-    void                     SetBaseData(_In_ const ComponentDataType& data) { _componentData = data; }
+    constexpr auto&      GetBaseData() const { return _componentData; }
+    constexpr void       SetBaseData(const ComponentDataType& data) { _componentData = data; }
 
-    const NodeDataType&      GetNodeData() const { return _componentData.Node; }
-    void                     SetNodeData(_In_ const NodeDataType& data) { _componentData.Node = data; }
+    constexpr auto&      GetNodeData() const { return _componentData.Node; }
+    constexpr void       SetNodeData(const NodeDataType& data) { _componentData.Node = data; }
 
-    const UINT&              GetStatusFlags() const { return _componentData.StatusFlag; }
+    constexpr CompStatus GetStatusFlags() const { return _componentData.StatusFlag; }
 
-    bool                     IsVisible() const { return Utils::Flags::HasFlag(StatusFlags, ComponentStatusFlags::Visible); };
-    void                     SetVisible(_In_ const bool status) {
+    constexpr bool       IsVisible() const { return Utils::Flags::HasFlag(GetStatusFlags(), CompStatus::Visible); };
+    constexpr void       SetVisible(bool status) {
         if (status) {
-            _componentData.StatusFlag |= (UINT)ComponentStatusFlags::Visible;
+            _componentData.StatusFlag |= CompStatus::Visible;
             return;
         }
 
-        _componentData.StatusFlag &= ~(UINT)ComponentStatusFlags::Visible;
+        _componentData.StatusFlag &= ~CompStatus::Visible;
     };
 
-    bool IsDisabled() const { return Utils::Flags::HasFlag(StatusFlags, ComponentStatusFlags::Visible); };
-    void SetDisabled(_In_ const bool status) {
+    bool IsDisabled() const { return Utils::Flags::HasFlag(StatusFlags, CompStatus::Visible); };
+    void SetDisabled(bool status) {
         if (status) {
-            _componentData.StatusFlag |= (UINT)ComponentStatusFlags::Disable;
+            _componentData.StatusFlag |= CompStatus::Disable;
             return;
         }
 
-        _componentData.StatusFlag &= ~(UINT)ComponentStatusFlags::Disable;
+        _componentData.StatusFlag &= ~CompStatus::Disable;
     };
 
-    const Size&  GetComponentSize() const { return _componentData.ComponentSize; }
-    void         SetComponentSize(const Size& size) { _componentData.ComponentSize = size; }
+    auto GetComponentSize() const { return _componentData.ComponentSize; }
+    void SetComponentSize(Size size) { _componentData.ComponentSize = size; }
 
-    const Point& GetComponentPosition() const { return _componentData.ComponentPosition; }
-    void         SetComponentPosition(const Point& pos) { _componentData.ComponentPosition = pos; }
+    auto GetComponentPosition() const { return _componentData.ComponentPosition; }
+    void SetComponentPosition(Point pos) { _componentData.ComponentPosition = pos; }
 
   public:
     COMPONENT_PROPERTY(GetBaseData, SetBaseData) ComponentDataType       BaseData;
     COMPONENT_PROPERTY(GetNodeData, SetNodeData) NodeDataType            NodeData;
-    COMPONENT_PROPERTY_GETTER_ONLY(GetStatusFlags) UINT                  StatusFlags;
+    COMPONENT_PROPERTY_GETTER_ONLY(GetStatusFlags) CompStatus            StatusFlags;
 
     COMPONENT_PROPERTY(IsVisible, SetVisible) bool                       Visible;
     COMPONENT_PROPERTY(IsDisabled, SetDisabled) bool                     Disabled;

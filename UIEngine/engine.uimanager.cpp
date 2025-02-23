@@ -24,8 +24,6 @@ using namespace Engine;
 
 using namespace Logic;
 
-unique_ptr<UIManager> UIManager::_selfInstance{};
-
 // @brief Initializes window with its children.
 void UIManager::InitializeWindow(vector<Components::Window*> children) {
     for (auto& child : children) {

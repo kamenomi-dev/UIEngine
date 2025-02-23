@@ -13,8 +13,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
     Engine::Initialize(hInstance);
 
     auto ownerWindow = new Window();
-    ownerWindow->SetStatusFlag({ComponentStatusFlags::Visible});
-    ownerWindow->SetFrameFlag({WindowFrameFlags::Central});
+    ownerWindow->SetStatusFlag({CompStatus::Visible});
+    ownerWindow->SetFrameFlag({WndFrame::Central});
     // ownerWindow->SetFrameFlag({WindowFrameFlags::Borderless});
 
     Engine::UIManager::Get().InitializeWindow({ownerWindow});
