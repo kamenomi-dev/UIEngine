@@ -55,14 +55,14 @@ void Window::Initialize() {
             actualStyle |= WS_VISIBLE;
         }
 
-        if (HasFlag(_windowData.FrameFlag, WindowFrameFlags::Central)) {
+        if (HasFlag(_windowData.FrameFlag, WndFrame::Central)) {
             const auto screenWidth  = GetSystemMetrics(SM_CXSCREEN);
             const auto screenHeight = GetSystemMetrics(SM_CYSCREEN);
 
             actualRect = {((int)screenWidth - WindowSize.Width) / 2, ((int)screenHeight - WindowSize.Height) / 2, WindowSize.Width, WindowSize.Height};
         }
 
-        if (HasFlag(_windowData.FrameFlag, WindowFrameFlags::Borderless)) {
+        if (HasFlag(_windowData.FrameFlag, WndFrame::Borderless)) {
             actualStyle |= WS_POPUP;
         } else {
             actualStyle |= WS_OVERLAPPEDWINDOW;
@@ -112,7 +112,7 @@ LRESULT Window::_Native_ComponentMessageProcessor(UINT uMsg, WPARAM wParam, LPAR
     if (uMsg == WM_CLOSE) {
         // if (WindowMap.size() == NULL) return NULL;
 
-        //// ÒòÎªµÚÒ»¸ö£¬¼´Ê×¸ö´´½¨µÄ´°¿ÚÎª Owner ´°¿Ú¡£
+        //// å› ä¸ºç¬¬ä¸€ä¸ªï¼Œå³é¦–ä¸ªåˆ›å»ºçš„çª—å£ä¸º Owner çª—å£ã€‚
         // const auto isOwnerWindowExist = WindowMap.begin()->second->WindowProperty.IsOwnerWindow;
 
         // if (!WindowProperty.IsOwnerWindow) {
@@ -153,7 +153,7 @@ LRESULT Window::_Native_ComponentMessageProcessor(UINT uMsg, WPARAM wParam, LPAR
             graphics.Restore(status);
         }
 
-        if (HasFlag(FrameFlags, WindowFrameFlags::Borderless)) _swapBuffer->Present();
+        if (HasFlag(FrameFlags, WndFrame::Borderless)) _swapBuffer->Present();
         else _swapBuffer->Present(paintStruct.hdc);
 
         EndPaint(WindowHandle, &paintStruct);

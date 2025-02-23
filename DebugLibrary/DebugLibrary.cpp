@@ -12,10 +12,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
     Engine::Initialize(hInstance);
 
-    // Better using.
-    auto ownerWindow = new Window{};
-    ownerWindow->SetStatusFlag({ComponentStatusFlags::Visible});
-    ownerWindow->SetFrameFlag({WindowFrameFlags::Central});
+    auto ownerWindow = new Window();
+    ownerWindow->SetStatusFlag({CompStatus::Visible});
+    ownerWindow->SetFrameFlag({WndFrame::Central});
+    // ownerWindow->SetFrameFlag({WindowFrameFlags::Borderless});
 
     auto subWindow = new Window{};
     subWindow->SetStatusFlag({ComponentStatusFlags::Visible});

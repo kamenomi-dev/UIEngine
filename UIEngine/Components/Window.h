@@ -7,7 +7,7 @@
 namespace Engine::Components {
 
 struct UIENGINE_API WindowDataType {
-    UINT       FrameFlag{(UINT)WindowFrameFlags::None};
+    UINT       FrameFlag{(UINT)WndFrame::None};
 
     HWND       WindowHandle{nullptr};
     bool       IsOwnerWindow{false}; // Owner window is unique to all of windows.
@@ -39,7 +39,7 @@ class UIENGINE_API Window : public Component {
     }
 
     void    Initialize();
-    void    SetFrameFlag(std::initializer_list<WindowFrameFlags> flags) { Utils::Flags::CombineFlag(_windowData.FrameFlag, flags); }
+    void    SetFrameFlag(WndFrame flags) { Utils::Flags::CombineFlag(_windowData.FrameFlag, flags); }
 
     void    _Native_UpdateWindowSize(Size);
     void    _Native_UpdateWindowPosition(Point);

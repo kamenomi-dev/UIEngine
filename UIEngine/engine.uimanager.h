@@ -6,6 +6,7 @@
 
 namespace Engine {
 
+// REVIEW: UIManager是一个空壳类，是否需要移除？
 class UIENGINE_API UIManager final {
   public:
     void           InitializeWindow(vector<Components::Window*>);
@@ -17,34 +18,14 @@ class UIENGINE_API UIManager final {
     // Single instance.
 
   public:
-    static auto& Initialize(HINSTANCE instance) {
-        if (_selfInstance) {
-            throw runtime_error("Error! UIManager has initialized already! ");
-        }
-
-        return _selfInstance = unique_ptr<UIManager>(new UIManager(instance));
-    };
     static auto& Get() {
-        if (!_selfInstance) {
-            throw runtime_error("Error! UIManager hasn't initialized yet! ");
-        }
-
-        return *_selfInstance;
+        static UIManager instance{};
+        return instance;
     };
 
-    ~UIManager()                           = default;
+    UIManager() = default;
     UIManager(const UIManager&)            = delete;
     UIManager& operator=(const UIManager&) = delete;
-
-  private:
-    static unique_ptr<UIManager> _selfInstance;
-
-    friend class unique_ptr<UIManager>;
-    UIManager(HINSTANCE hInstance) {
-        if (_selfInstance) {
-            throw runtime_error("Error! UIManager has initialized already! ");
-        }
-    };
 };
 
 } // namespace Engine

@@ -32,8 +32,6 @@ UIENGINE_API void Engine::Initialize(HINSTANCE hInstance) {
 
     const Gdiplus::GdiplusStartupInput startupInput{};
     CHECK_RESULT(Gdiplus::GdiplusStartup(&GdiplusToken, &startupInput, nullptr));
-
-    UIManager::Initialize(hInstance);
     return;
 }
 
