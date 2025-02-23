@@ -89,8 +89,8 @@ void Window::Initialize() {
     }
 
 
-    _swapBuffer             = make_unique<SwapBuffer>(WindowHandle);
-    _initialized            = true;
+    _swapBuffer  = make_unique<SwapBuffer>(WindowHandle);
+    _initialized = true;
 
     componentTree           = make_unique<CComponentTree>(this);
     WindowMap[WindowHandle] = this;
@@ -153,11 +153,9 @@ LRESULT Window::_Native_ComponentMessageProcessor(UINT uMsg, WPARAM wParam, LPAR
             graphics.Restore(status);
         }
 
-        if (HasFlag(FrameFlags, WindowFrameFlags::Borderless)) {
-            _swapBuffer->Present();
-        } else {
-            _swapBuffer->Present(paintStruct.hdc);
-        }
+        if (HasFlag(FrameFlags, WindowFrameFlags::Borderless)) _swapBuffer->Present();
+        else _swapBuffer->Present(paintStruct.hdc);
+
         EndPaint(WindowHandle, &paintStruct);
         isReturn = true;
     }

@@ -12,12 +12,17 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
     Engine::Initialize(hInstance);
 
-    auto ownerWindow = new Window();
+    // Better using.
+    auto ownerWindow = new Window{};
     ownerWindow->SetStatusFlag({ComponentStatusFlags::Visible});
     ownerWindow->SetFrameFlag({WindowFrameFlags::Central});
-    // ownerWindow->SetFrameFlag({WindowFrameFlags::Borderless});
 
-    Engine::UIManager::Get().InitializeWindow({ownerWindow});
+    auto subWindow = new Window{};
+    subWindow->SetStatusFlag({ComponentStatusFlags::Visible});
+    subWindow->SetFrameFlag({WindowFrameFlags::Central});
+    // subWindow->SetFrameFlag({WindowFrameFlags::Borderless});
+
+    Engine::UIManager::Get().InitializeWindow({ownerWindow, subWindow});
 
     return Engine::StartMessageLoop();
 }
