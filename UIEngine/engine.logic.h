@@ -6,20 +6,17 @@
 
 namespace Engine {
 
-namespace Component {
-class CWindow;
-class CBase;
+namespace Components {
+class Window;
+class Component;
 } // namespace Component
 
 namespace Logic {
 
 namespace Defines {
 
-typedef Component::CBase*(TTryHittestCondition)(LPVOID,
-                                                Component::CBase*,
-                                                vector<Component::CBase*>&,
-                                                vector<Component::CBase*>&);
-typedef void(TTryHittestConditionNext)(LPVOID, TTryHittestCondition, vector<Component::CBase*>&, vector<Component::CBase*>&);
+typedef Components::Component*(TTryHittestCondition)(LPVOID, Components::Component*, Components::Component*, vector<Components::Component*>&);
+typedef void(TTryHittestConditionNext)(LPVOID, TTryHittestCondition, vector<Components::Component*>&, vector<Components::Component*>&);
 
 } // namespace Defines
 
@@ -27,15 +24,15 @@ using namespace Defines;
 
 class UIENGINE_API CComponentTree final {
 public:
-    CComponentTree(Component::CWindow* pRootWindow) : _pRootWindow(pRootWindow) {}
+    CComponentTree(Components::Window* pRootWindow) : _pRootWindow(pRootWindow) {}
 
-    Component::CWindow*       GetRootWindow() const { return _pRootWindow; };
-    vector<Component::CBase*> TryHitTest(Rect);
-    vector<Component::CBase*> TryHitTest(Point);
-    vector<Component::CBase*> TryHitTestWithCondition(TTryHittestCondition, LPVOID lParam);
+    Components::Window*            GetRootWindow() const { return _pRootWindow; };
+    vector<Components::Component*> TryHitTest(Rect);
+    vector<Components::Component*> TryHitTest(Point);
+    vector<Components::Component*> TryHitTestWithCondition(TTryHittestCondition, LPVOID lParam);
 
 private:
-    Component::CWindow* _pRootWindow{nullptr};
+    Components::Window* _pRootWindow{nullptr};
 };
 } // namespace Logic
 } // namespace Engine

@@ -21,25 +21,28 @@
     <ClInclude Include="engine.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="engine.render.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="engine.logic.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="engine.uimanager.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="components\component.base.h">
+    <ClInclude Include="Components\Component.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="components\component.window.h">
+    <ClInclude Include="Components\Window.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="engine.enum.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="engine.util.h">
+    <ClInclude Include="Utils\Flags.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Utils\Graph.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Utils\Blur.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
@@ -53,22 +56,22 @@
     <ClCompile Include="engine.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="engine.render.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="engine.logic.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="engine.uimanager.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="components\component.base.cpp">
+    <ClCompile Include="Components\Component.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="components\component.window.cpp">
+    <ClCompile Include="Components\Window.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="engine.util.cpp">
+    <ClCompile Include="Utils\Graph.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Utils\Blur.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
