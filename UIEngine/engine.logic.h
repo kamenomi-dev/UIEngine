@@ -22,9 +22,9 @@ typedef void(TTryHittestConditionNext)(LPVOID, TTryHittestCondition, vector<Comp
 
 using namespace Defines;
 
-class UIENGINE_API CComponentTree final {
+class UIENGINE_API ComponentTree final {
 public:
-    CComponentTree(Components::Window* pRootWindow) : _pRootWindow(pRootWindow) {}
+    ComponentTree(Components::Window* pRootWindow) : _pRootWindow(pRootWindow) {}
 
     Components::Window*            GetRootWindow() const { return _pRootWindow; };
     vector<Components::Component*> TryHitTest(Rect);

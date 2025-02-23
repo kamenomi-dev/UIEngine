@@ -18,11 +18,11 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
     // ownerWindow->SetFrameFlag({WindowFrameFlags::Borderless});
 
     auto subWindow = new Window{};
-    subWindow->SetStatusFlag({ComponentStatusFlags::Visible});
-    subWindow->SetFrameFlag({WindowFrameFlags::Central});
+    subWindow->SetStatusFlag({CompStatus::Visible});
+    subWindow->SetFrameFlag({WndFrame::Central});
     // subWindow->SetFrameFlag({WindowFrameFlags::Borderless});
 
-    Engine::UIManager::Get().InitializeWindow({ownerWindow, subWindow});
+    Engine::InitializeWindow({ownerWindow, subWindow});
 
     return Engine::StartMessageLoop();
 }

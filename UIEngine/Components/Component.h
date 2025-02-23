@@ -132,16 +132,16 @@ class UIENGINE_API Component {
     ComponentDataType _componentData{};
 
   public:
-    constexpr auto&      GetBaseData() const { return _componentData; }
-    constexpr void       SetBaseData(const ComponentDataType& data) { _componentData = data; }
+    constexpr const ComponentDataType& GetBaseData() const { return _componentData; }
+    constexpr void                     SetBaseData(const ComponentDataType& data) { _componentData = data; }
 
-    constexpr auto&      GetNodeData() const { return _componentData.Node; }
-    constexpr void       SetNodeData(const NodeDataType& data) { _componentData.Node = data; }
+    constexpr const NodeDataType&      GetNodeData() const { return _componentData.Node; }
+    constexpr void                     SetNodeData(const NodeDataType& data) { _componentData.Node = data; }
 
-    constexpr CompStatus GetStatusFlags() const { return _componentData.StatusFlag; }
+    constexpr const CompStatus         GetStatusFlags() const { return _componentData.StatusFlag; }
 
-    constexpr bool       IsVisible() const { return Utils::Flags::HasFlag(GetStatusFlags(), CompStatus::Visible); };
-    constexpr void       SetVisible(bool status) {
+    const bool                         IsVisible() const { return Utils::Flags::HasFlag(GetStatusFlags(), CompStatus::Visible); };
+    void                               SetVisible(bool status) {
         if (status) {
             _componentData.StatusFlag |= CompStatus::Visible;
             return;
@@ -150,8 +150,8 @@ class UIENGINE_API Component {
         _componentData.StatusFlag &= ~CompStatus::Visible;
     };
 
-    bool IsDisabled() const { return Utils::Flags::HasFlag(StatusFlags, CompStatus::Visible); };
-    void SetDisabled(bool status) {
+    const bool IsDisabled() const { return Utils::Flags::HasFlag(StatusFlags, CompStatus::Visible); };
+    void       SetDisabled(bool status) {
         if (status) {
             _componentData.StatusFlag |= CompStatus::Disable;
             return;
@@ -160,11 +160,11 @@ class UIENGINE_API Component {
         _componentData.StatusFlag &= ~CompStatus::Disable;
     };
 
-    auto GetComponentSize() const { return _componentData.ComponentSize; }
-    void SetComponentSize(Size size) { _componentData.ComponentSize = size; }
+    const Size  GetComponentSize() const { return _componentData.ComponentSize; }
+    void        SetComponentSize(Size size) { _componentData.ComponentSize = size; }
 
-    auto GetComponentPosition() const { return _componentData.ComponentPosition; }
-    void SetComponentPosition(Point pos) { _componentData.ComponentPosition = pos; }
+    const Point GetComponentPosition() const { return _componentData.ComponentPosition; }
+    void        SetComponentPosition(Point pos) { _componentData.ComponentPosition = pos; }
 
   public:
     COMPONENT_PROPERTY(GetBaseData, SetBaseData) ComponentDataType       BaseData;

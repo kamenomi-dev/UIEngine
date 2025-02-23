@@ -20,23 +20,22 @@
 #include "pch.h"
 #include "engine.h"
 
-using namespace Engine;
-
-using namespace Logic;
+using namespace Engine::Components;
 
 // @brief Initializes window with its children.
-void UIManager::InitializeWindow(vector<Components::Window*> children) {
+UIENGINE_API void Engine::InitializeWindow(vector<Window*> children) {
     for (auto& child : children) {
         child->Initialize();
     }
-
-    _windowList = children;
 }
 
-LRESULT UIManager::WindowsMessageProcessor(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
-    static auto& UIManager     = UIManager::Get();
-    auto&        currentWindow = Components::Window::GetWindowMap()[hWnd];
-    auto         bNoop         = false;
+UIENGINE_API LRESULT Engine::WindowsMessageProcessor(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+    auto& currentWindow = Window::GetWindowMap()[hWnd];
+    auto  bNoop         = false;
+
+    if (uMsg == WM_ERASEBKGND) {
+        return 0;
+    }
 
     if (currentWindow != nullptr) {
         const auto compResult = currentWindow->_Native_ComponentMessageProcessor(uMsg, wParam, lParam, bNoop);
@@ -44,10 +43,6 @@ LRESULT UIManager::WindowsMessageProcessor(HWND hWnd, UINT uMsg, WPARAM wParam, 
         if (bNoop) {
             return compResult;
         }
-    }
-
-    if (uMsg == WM_ERASEBKGND) {
-        return 0;
     }
 
     LRESULT dwmResult{};

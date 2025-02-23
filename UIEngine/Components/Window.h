@@ -1,4 +1,4 @@
-///* SPDX-License-Identifier: GPL-3.0-or-later */
+ï»¿/* SPDX-License-Identifier: GPL-3.0-or-later */
 #pragma once
 
 #ifndef __COMPONENT_WINDOW_H__
@@ -14,7 +14,7 @@ struct UIENGINE_API WindowDataType {
     Size       WindowSize{800, 600};
     Point      WindowPosition{0, 0};
     wstring    WindowClassText{L"Component_Window"};
-    wstring    WindowTitleText{L"ÊÓ´°"};
+    wstring    WindowTitleText{L"è§†çª—"};
     WNDCLASSEX WindowClassInformation{};
 };
 
@@ -39,7 +39,7 @@ class UIENGINE_API Window : public Component {
     }
 
     void    Initialize();
-    void    SetFrameFlag(WndFrame flags) { Utils::Flags::CombineFlag(_windowData.FrameFlag, flags); }
+    void    SetFrameFlag(WndFrame flags) { Utils::Flags::CombineFlag(_windowData.FrameFlag, {flags}); }
 
     void    _Native_UpdateWindowSize(Size);
     void    _Native_UpdateWindowPosition(Point);
@@ -49,7 +49,7 @@ class UIENGINE_API Window : public Component {
     void _UpdateSwapBufferSize() {
         static Size lastSize{WindowSize};
 
-        if (not _swapBuffer) {
+        if (not swapBuffer) {
             return;
         }
 
@@ -57,20 +57,20 @@ class UIENGINE_API Window : public Component {
             return;
         }
 
-        _swapBuffer->RefreshSize();
+        swapBuffer->RefreshSize();
         lastSize = WindowSize;
     }
 
   public:
-    static unordered_map<HWND, Window*>& GetWindowMap() { return WindowMap; }
+    static unordered_map<HWND, Window*>& GetWindowMap() { return windowMap; }
 
-    unique_ptr<Logic::CComponentTree>    componentTree;
+    unique_ptr<Utils::Graph::SwapBuffer> swapBuffer;
+    unique_ptr<Logic::ComponentTree>     componentTree;
 
   private:
-    bool                                 _initialized{false};
-    unique_ptr<Utils::Graph::SwapBuffer> _swapBuffer;
+    bool                                _initialized{false};
 
-    static unordered_map<HWND, Window*>  WindowMap;
+    static unordered_map<HWND, Window*> windowMap;
 
     /*
      *
@@ -115,8 +115,6 @@ class UIENGINE_API Window : public Component {
 
         _windowData.WindowTitleText = titleText;
     }
-
-    // DELETE ME // SetWindowSize/Position -> WindowsMessageProcessor -> _Native_SetWindowSize/Position.
 
     Size GetWindowSize() const { return _windowData.WindowSize; }
     void SetWindowSize(_In_ const Size& size) {
@@ -171,7 +169,7 @@ class UIENGINE_API Window : public Component {
 //
 // public:
 //     unique_ptr<Logic::CComponentTree>& GetComponentTree() { return _componentTree; };
-//     // User musn't change the position via using this method. Or£¿
+//     // User musn't change the position via using this method. Orï¼Ÿ
 //     Point _Property_SetComponentPosition() const = delete;
 //
 //     virtual wstring _Property_GetComponentClass() const { return L"Component.Window"s; }

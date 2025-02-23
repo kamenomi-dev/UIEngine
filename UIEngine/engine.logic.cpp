@@ -67,11 +67,11 @@ static Component* __TryHitTestFromPoint(LPVOID pTargetPoint, Component* currComp
     return nullptr;
 }
 
-vector<Component*> CComponentTree::TryHitTest(Rect targetRect) { return TryHitTestWithCondition(__TryHitTestFromRect, &targetRect); }
+vector<Component*> ComponentTree::TryHitTest(Rect targetRect) { return TryHitTestWithCondition(__TryHitTestFromRect, &targetRect); }
 
-vector<Component*> CComponentTree::TryHitTest(Point targetPoint) { return TryHitTestWithCondition(__TryHitTestFromPoint, &targetPoint); }
+vector<Component*> ComponentTree::TryHitTest(Point targetPoint) { return TryHitTestWithCondition(__TryHitTestFromPoint, &targetPoint); }
 
-vector<Component*> CComponentTree::TryHitTestWithCondition(TTryHittestCondition conditionFunc, LPVOID lParam) {
+vector<Component*> ComponentTree::TryHitTestWithCondition(TTryHittestCondition conditionFunc, LPVOID lParam) {
     vector<Component*> resultComps{};
 
     resultComps.push_back(conditionFunc(lParam, _pRootWindow, _pRootWindow->NodeData.FirstChild, resultComps));

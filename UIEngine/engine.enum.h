@@ -4,25 +4,25 @@
 #ifndef __ENGINE_ENUM_H__
 #define __ENGINE_ENUM_H__
 
-#define UIE_ENUM_BIT_FLAGS(Type)                                                                                                                                                   \
-    FORCEINLINE constexpr Type  operator&(Type a, Type b) { return Type((std::underlying_type_t<Type>)a & (std::underlying_type_t<Type>)b); }                                        \
-    FORCEINLINE constexpr Type  operator|(Type a, Type b) { return Type((std::underlying_type_t<Type>)a | (std::underlying_type_t<Type>)b); }                                        \
-    FORCEINLINE constexpr Type  operator~(Type a) { return Type(~(std::underlying_type_t<Type>)a); }                                                                                 \
-    FORCEINLINE constexpr Type  operator^(Type a, Type b) { return Type((std::underlying_type_t<Type>)a ^ (std::underlying_type_t<Type>)b); }                                        \
-    FORCEINLINE constexpr Type& operator&=(Type& a, Type b) {                                                                                                                        \
+#define ENUM_BIT_FLAGS(Type)                                                                                                                                                   \
+    FORCEINLINE constexpr Type  operator&(Type a, Type b) { return Type((std::underlying_type_t<Type>)a & (std::underlying_type_t<Type>)b); }                                      \
+    FORCEINLINE constexpr Type  operator|(Type a, Type b) { return Type((std::underlying_type_t<Type>)a | (std::underlying_type_t<Type>)b); }                                      \
+    FORCEINLINE constexpr Type  operator~(Type a) { return Type(~(std::underlying_type_t<Type>)a); }                                                                               \
+    FORCEINLINE constexpr Type  operator^(Type a, Type b) { return Type((std::underlying_type_t<Type>)a ^ (std::underlying_type_t<Type>)b); }                                      \
+    FORCEINLINE constexpr Type& operator&=(Type& a, Type b) {                                                                                                                      \
         a = a & b;                                                                                                                                                                 \
         return a;                                                                                                                                                                  \
     }                                                                                                                                                                              \
-    FORCEINLINE constexpr Type& operator|=(Type& a, Type b) {                                                                                                                        \
+    FORCEINLINE constexpr Type& operator|=(Type& a, Type b) {                                                                                                                      \
         a = a | b;                                                                                                                                                                 \
         return a;                                                                                                                                                                  \
     }                                                                                                                                                                              \
-    FORCEINLINE constexpr Type& operator^=(Type& a, Type b) {                                                                                                                        \
+    FORCEINLINE constexpr Type& operator^=(Type& a, Type b) {                                                                                                                      \
         a = a ^ b;                                                                                                                                                                 \
         return a;                                                                                                                                                                  \
     }
 
-#define UIE_ENUM_BIT_FLAGS_FRIEND(Type)                                                                                                                                            \
+#define ENUM_BIT_FLAGS_FRIEND(Type)                                                                                                                                            \
     friend constexpr Type  operator&(Type a, Type b);                                                                                                                              \
     friend constexpr Type  operator|(Type a, Type b);                                                                                                                              \
     friend constexpr Type  operator~(Type a);                                                                                                                                      \
@@ -43,14 +43,14 @@ enum class CompStatus : UINT {
     Visible = FLAG_INDEX(0),
     Disable = FLAG_INDEX(1)
 };
-UIE_ENUM_BIT_FLAGS(CompStatus);
+ENUM_BIT_FLAGS(CompStatus);
 
 enum class WndFrame : UINT {
     None       = 0u,
     Central    = FLAG_INDEX(0),
     Borderless = FLAG_INDEX(1)
 };
-UIE_ENUM_BIT_FLAGS(WndFrame);
+ENUM_BIT_FLAGS(WndFrame);
 
 // ==============================
 // All of component messages

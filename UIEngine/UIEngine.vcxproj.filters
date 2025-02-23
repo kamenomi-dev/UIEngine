@@ -24,7 +24,7 @@
     <ClInclude Include="engine.logic.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="engine.uimanager.h">
+    <ClInclude Include="engine.init.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Components\Component.h">
@@ -59,7 +59,7 @@
     <ClCompile Include="engine.logic.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="engine.uimanager.cpp">
+    <ClCompile Include="engine.init.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Components\Component.cpp">

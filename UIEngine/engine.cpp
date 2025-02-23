@@ -20,13 +20,14 @@
 #include "pch.h"
 #include "engine.h"
 
-UINT_PTR          Engine::GdiplusToken{};
-HINSTANCE         Engine::ProcessInstance{};
+UINT_PTR          Engine::GdiplusToken{NULL};
+HINSTANCE         Engine::ProcessInstance{nullptr};
 
 UIENGINE_API void Engine::Initialize(HINSTANCE hInstance) {
     ProcessInstance = hInstance;
 
     if (GdiplusToken) {
+        throw std::logic_error("Has already initialized.");
         return;
     }
 

@@ -11,7 +11,7 @@
 #ifndef __ENGINE_H__
 #define __ENGINE_H__
 
-#ifdef _DEBUG // !!! FIX ME
+#ifdef _DEBUG
 #define CHECK_RESULT(ret)      assert((ret) == Status::Ok && "Error, need to debug to find the detail.");
 #define CHECK_RESULT_BOOL(ret) assert(!!(ret) && "Error, need to debug to find the detail.");
 #else
@@ -42,6 +42,6 @@ UIENGINE_API extern int  StartMessageLoop();
 #include "./Components/Component.h"
 #include "./Components/Window.h"
 
-#include "./engine.uimanager.h"
+#include "./engine.init.h"
 
 #endif //  __ENGINE_H__
