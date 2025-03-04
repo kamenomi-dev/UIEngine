@@ -30,15 +30,16 @@ UIENGINE_API void Engine::InitializeWindow(vector<Window*> children) {
 }
 
 UIENGINE_API LRESULT Engine::WindowsMessageProcessor(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
-    auto& currentWindow = Window::GetWindowMap()[hWnd];
-    auto  bNoop         = false;
+    auto windowInfo = Window::GetWindowMap().find(hWnd);
+    auto bNoop      = false;
 
     if (uMsg == WM_ERASEBKGND) {
         return 0;
     }
 
-    if (currentWindow != nullptr) {
-        const auto compResult = currentWindow->_Native_ComponentMessageProcessor(uMsg, wParam, lParam, bNoop);
+    if (windowInfo != Window::GetWindowMap().end()) {
+        const auto currentWindow = windowInfo->second.ThisWindow;
+        const auto compResult    = currentWindow->_Native_ComponentMessageProcessor(uMsg, wParam, lParam, bNoop);
 
         if (bNoop) {
             return compResult;

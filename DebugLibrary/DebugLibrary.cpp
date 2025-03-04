@@ -15,6 +15,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
     auto ownerWindow = new Window();
     ownerWindow->SetStatusFlag({CompStatus::Visible});
     ownerWindow->SetFrameFlag({WndFrame::Central});
+    
     // ownerWindow->SetFrameFlag({WindowFrameFlags::Borderless});
 
     auto subWindow = new Window{};

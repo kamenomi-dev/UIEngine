@@ -9,8 +9,8 @@
 
 #ifndef ___NO_SKIP_4251
 #pragma warning(disable : 4251)
-#pragma message("Oh! The library has ignored C4251!"                                                                   \
-                " You should add '___NO_SKIP_4251' marco"                                                              \
+#pragma message("Oh! The library has ignored C4251!"                                                                                                                               \
+                " You should add '___NO_SKIP_4251' marco"                                                                                                                          \
                 " at the topest level of file if you get in trouble.")
 #endif
 
@@ -31,6 +31,7 @@
 
 #include <algorithm>
 #include <any>
+#include <stack>
 #include <assert.h>
 #include <exception>
 #include <functional>

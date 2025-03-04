@@ -25,13 +25,13 @@ using namespace Engine::Utils::Graph;
 using namespace Engine::Logic;
 using namespace Engine::Components;
 
-unordered_map<HWND, Window*> Window::windowMap{};
+unordered_map<HWND, WindowInfoType> Window::windowMap{};
 
 // ---
 
 void Window::Initialize() {
     for (auto& window : windowMap) {
-        if (window.second == this) {
+        if (window.second.ThisWindow == this) {
             throw std::logic_error("Window has initialized already. ");
         }
     }
@@ -90,10 +90,10 @@ void Window::Initialize() {
 
 
     _initialized            = true;
-    windowMap[WindowHandle] = this;
+    windowMap[WindowHandle] = {this, nullptr};
 
     swapBuffer    = make_unique<SwapBuffer>(WindowHandle);
-    componentTree = make_unique<ComponentTree>(this)
+    componentTree = make_unique<ComponentTree>(this);
 }
 
 void Window::_Native_UpdateWindowSize(Size newSize) {
@@ -108,7 +108,6 @@ void Window::_Native_UpdateWindowPosition(Point newPosition) { _windowData.Windo
 inline void OnPaint(Window* currWnd, UINT, WPARAM, LPARAM);
 inline void OnMouseMove(Window* currWnd, UINT uMsg, WPARAM, LPARAM lParam);
 LRESULT     Window::_Native_ComponentMessageProcessor(UINT uMsg, WPARAM wParam, LPARAM lParam, bool& isReturn) {
-
     switch (uMsg) {
     case WM_SIZE: {
         _Native_UpdateWindowSize({GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)});
@@ -121,8 +120,8 @@ LRESULT     Window::_Native_ComponentMessageProcessor(UINT uMsg, WPARAM wParam, 
         break;
     }
     case WM_PAINT: {
+        OnPaint(this, uMsg, NULL, NULL);
         isReturn = true;
-
         break;
     }
     case WM_CLOSE: {
@@ -133,8 +132,8 @@ LRESULT     Window::_Native_ComponentMessageProcessor(UINT uMsg, WPARAM wParam, 
             PostQuitMessage(NULL);
         }
 
-        isReturn = true;
         delete this;
+        isReturn = true;
 
         [[fallthrough]];
     }
@@ -147,48 +146,84 @@ LRESULT     Window::_Native_ComponentMessageProcessor(UINT uMsg, WPARAM wParam, 
     return NULL;
 }
 
-inline void OnPaint(Window* currWnd, UINT, WPARAM, LPARAM) {
-    const auto  hWnd       = currWnd->WindowHandle;
-    const auto& swapBuffer = currWnd->swapBuffer;
+void OnPaint(Window* currWnd, UINT, WPARAM, LPARAM) {
+    const auto  hWnd = currWnd->WindowHandle;
 
     PAINTSTRUCT paintStruct{};
-    BeginPaint(hWnd, &paintStruct);
+    if (HDC hdc = ::BeginPaint(hWnd, &paintStruct); !hdc) {
+        ::EndPaint(hWnd, &paintStruct);
+        return;
+    }
 
-    const Rect invalidArea{RectToGpRect(paintStruct.rcPaint)};
-    auto       coveredComponents = currWnd->componentTree->TryHitTest(invalidArea) | std::views::reverse | std::views::filter([](const auto& p) { return p != nullptr; });
+    if (!currWnd->swapBuffer) {
+        ::EndPaint(hWnd, &paintStruct);
+        return;
+    }
 
-    // -
-    Gdiplus::Graphics graphics{swapBuffer->GetDrawContext()};
+    const auto&            swapBuffer = currWnd->swapBuffer;
+    const Rect             invalidArea{RectToGpRect(paintStruct.rcPaint)};
 
-    for (const auto& component : coveredComponents) {
-        const auto& status = graphics.Save();
-        {
-            graphics.SetClip(Rect(component->ComponentPosition, component->ComponentSize));
-            component->_Native_TransformMessageProcessor(ComponentMessages::Paint, NULL, (LPARAM)&graphics);
+    Gdiplus::Graphics      graphics{swapBuffer->GetDrawContext()};
+    std::stack<Component*> renderStack{};
+    Component*             currentComponent = currWnd;
+
+    while (currentComponent != nullptr) {
+        const auto& currentRect = Rect(currentComponent->ComponentPosition, currentComponent->ComponentSize);
+        renderStack.push(currentComponent);
+
+        if (currentRect.IntersectsWith(invalidArea)) {
+            const auto savedState = graphics.Save();
+
+            graphics.SetClip(currentRect);
+            currentComponent->_Native_TransformMessageProcessor(ComponentMessages::Paint, NULL, (LPARAM)&graphics);
+
+            graphics.Restore(savedState);
         }
-        graphics.Restore(status);
+
+        if (currentComponent->NodeData.FirstChild) {
+            currentComponent = currentComponent->NodeData.FirstChild;
+            continue;
+        }
+
+        while (!renderStack.empty()) {
+            auto* topComponent = renderStack.top();
+            renderStack.pop();
+
+            if (topComponent->NodeData.Next) {
+                currentComponent = topComponent->NodeData.Next;
+                break;
+            }
+
+            if (renderStack.empty()) {
+                currentComponent = nullptr;
+            }
+        }
     }
 
     if (HasFlag(currWnd->FrameFlags, WndFrame::Borderless)) {
         swapBuffer->Present();
-    } else swapBuffer->Present(paintStruct.hdc);
+    } else {
+        swapBuffer->Present(paintStruct.hdc);
+    }
 
-    EndPaint(hWnd, &paintStruct);
+    ::EndPaint(hWnd, &paintStruct);
 }
 
 inline void OnMouseMove(Window* currWnd, UINT uMsg, WPARAM, LPARAM lParam) {
-    static unordered_map<Window*, Component*> lastComponentMap{};
+    static auto& windowMap       = Window::GetWindowMap();
+    auto         componentResult = windowMap.find(currWnd->WindowHandle);
 
-    if (uMsg == WM_CLOSE) {
-        lastComponentMap.erase(currWnd);
+    if (componentResult == windowMap.end()) {
         return;
     }
 
-    // --
-    static Component* lastComponent = lastComponentMap[currWnd];
+    WindowInfoType& componentInfo = componentResult->second;
+    auto            lastComponent = componentInfo.LastComponent;
 
-    const Point       mousePoint    = {GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)};
-    const auto        nextComponent = currWnd->componentTree->TryHitTest(mousePoint)[0];
+    // -
+
+    const Point mousePoint    = {GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)};
+    const auto  nextComponent = currWnd->componentTree->TryHitTest(mousePoint)[0];
 
     if (lastComponent == nextComponent) {
         return;
@@ -202,7 +237,7 @@ inline void OnMouseMove(Window* currWnd, UINT uMsg, WPARAM, LPARAM lParam) {
     }
 
     if (nextComponent) {
-        lastComponent = nextComponent;
+        componentInfo.LastComponent = nextComponent;
 
         const auto& posComponent = nextComponent->ComponentPosition;
         const auto  ptMouse      = mousePoint - posComponent;
