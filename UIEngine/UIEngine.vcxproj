@@ -172,7 +172,7 @@
     <ClInclude Include="engine.h" />
     <ClInclude Include="engine.logic.h" />
     <ClInclude Include="engine.init.h" />
-    <ClInclude Include="engine.uimanager.h" />
+    <ClInclude Include="engine.component.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Utils\Blur.h" />
     <ClInclude Include="Utils\Flags.h" />
@@ -185,7 +185,7 @@
     <ClCompile Include="engine.cpp" />
     <ClCompile Include="engine.logic.cpp" />
     <ClCompile Include="engine.init.cpp" />
-    <ClCompile Include="engine.uimanager.cpp" />
+    <ClCompile Include="engine.component.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

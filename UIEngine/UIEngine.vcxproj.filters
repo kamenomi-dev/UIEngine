@@ -45,7 +45,7 @@
     <ClInclude Include="Utils\Blur.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="engine.uimanager.h">
+    <ClInclude Include="engine.component.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
@@ -77,7 +77,7 @@
     <ClCompile Include="Utils\Blur.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="engine.uimanager.cpp">
+    <ClCompile Include="engine.component.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

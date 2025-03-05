@@ -28,6 +28,7 @@ struct UIENGINE_API WindowDataType {
 class UIENGINE_API Window : public Component {
   public:
     Window() : Component() {
+        _componentData.ComponentID       = L"Component.Window";
         _componentData.ComponentSize     = {800, 600};
         _componentData.ComponentPosition = {0, 0};
     }

@@ -43,5 +43,6 @@ UIENGINE_API extern int  StartMessageLoop();
 #include "./Components/Window.h"
 
 #include "./engine.init.h"
+#include "./engine.component.h"
 
 #endif //  __ENGINE_H__
